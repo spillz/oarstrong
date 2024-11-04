@@ -1,0 +1,65 @@
+Priorities
+==========
+* Holding down while running to edge of platform glitches [fixed 10/12/22]
+* Player state tracking [mostly done around 10/12/22]
+* Generalizing AI/Behavior handling for monsters
+* Add better state-based animation handling for players/monsters
+* Add more monsters
+* Bugfix: Camera priority -- should move focus away from dead/escaped players [FIXED 9/11/22]
+* HUD/Inventory items -- make sure this fits on screen and doesn't overlap game status
+* Level gen -- create an initial traversible path through level using passable tiles and platforms, then add nodes to the main path and other parts of map and connect them together. Add spawn tiles rather than spawning monsters randomly.
+
+Map Gen
+=======
+* Navigable maps -- main route to exit should always exist and be navigable without items but not be trivial
+* Main path (hard) + side paths (easier off ramps from challenging bits)
+* Map styles (descent, ascent, rush left/right, maze, connected rooms, open spaces, collasping levels etc.)
+* Biomes (science, factory, sleeping quarters, mess hall, war/training room, control center, Trash, flight deck etc.)
+* Monsters spawn in appropriate places and fit with biome
+* Enclosed rooms with doors
+* Map objectives
+
+Inventory Items
+===============
+* Inventory display need to fit on screen
+* Jump abilities (wall jump, double jump)
+* Climbing gloves
+* Invisibility/invincibility
+* Rescue items (passive items to prevent fall deaths, explosion deaths etc.)
+* Color code upgrades in some way (e.g., red=damage/strength, blue=range/targeting, yellow=fuel/ammo, green=recharge time, purple=bonus effect)
+* Temporary items (e.g., potions) -- disappear when used up
+* Item to drill dirt
+
+Tiles
+=====
+* Bush growth more realistic, better tile art
+* Potions + burner combo
+* Cryo chamber
+* Plans? e.g., image a certain number for a bonus
+
+Entities
+========
+* More Traps: horizontally moving blade/exploding
+* Tweak wall mount gun. not just roof mounted, sprite, don't focus on players who have left the level
+* Vehicles
+
+Monsters
+========
+* tank levitates (but doesn't fly very high), fires weapon, moves to player if possible
+* eater use rifle (angled fire), burns through walls
+* jester shoots, throws bombs, explodes when it dies
+* flying enemies / jet pack users?
+* patrol routes and guards
+* monsters that interact with one another (e.g., command minions or work as a team, can be befriended)
+
+Look and feel
+=============
+* Switch player with camera focus [DONE 9/5/22]
+* Character sprite select on entry into the game [DONE 9/6/22]
+* Control customization
+* Visual thumbstick and buttons for the touchscreen controls
+* Sound -- levelize existing clips, handle multiple plays of same sound, add more sound, replace the annoying stuff
+* Sprites
+* Animation
+* Juice
+
