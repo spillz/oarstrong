@@ -83,6 +83,9 @@ class Controller {
     constructor() {
         this.controlStates = {... controlStates0}
         this.attach_to_player();
+        window.addEventListener('blur', e=>{
+            this.clearPressedAll();
+        });
     }
     attach_to_player(player=null) {
         this.player = player;
@@ -99,6 +102,11 @@ class Controller {
             player.controlStates[action] = state;
         }
     }
+    clearPressedAll() {
+        for(const c in this.controlStates) {
+            this.controlStates[c] = false;
+        }
+    }
     vibrate(intensity1, intensity2, duration) {
 
     } 
@@ -111,8 +119,8 @@ class KeyboardController extends Controller {
             keyMap = defaultKeyMap;
         this.keyMap = keyMap;
         let that = this;
-        document.querySelector("html").onkeydown = function(e) {that.keyDownHandler(e)};
-        document.querySelector("html").onkeyup = function(e) {that.keyUpHandler(e)};
+        document.onkeydown = function(e) {that.keyDownHandler(e)};
+        document.onkeyup = function(e) {that.keyUpHandler(e)};
     }
     keyDownHandler(e){
         if(e.key=="p") { //Keyboard only shortcuts
