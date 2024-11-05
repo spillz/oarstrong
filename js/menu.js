@@ -44,7 +44,7 @@ class Menu {
 class MainMenu extends Menu {
     constructor() {
         let dim = new Rect([0, game.canvas.height/2, game.canvas.width, 4*game.tileSize])
-        super(['Escape Run', 'Competitive Run', 'High Scores', 'Options'], dim, (menu, action) => this.handler(menu, action));
+        super(['Play Game', 'High Scores', 'Options'], dim, (menu, action) => this.handler(menu, action));
     }
     updateWindowSize() {
         this.dim = new Rect([0, game.canvas.height/2, game.canvas.width, 4*game.tileSize]);
@@ -71,28 +71,9 @@ class MainMenu extends Menu {
                     game.startGame();
                     break;
                 case 1:
-                    if(controlStates["left"]) {
-                        game.prefDimW = 44;
-                        game.prefDimH = 26;
-                        game.startLevelTime = 90000;
-                    } else if(controlStates["right"]) {
-                        game.prefDimW = 11;
-                        game.prefDimH = 6; 
-                        game.startLevelTime = 30000;
-                    } else {
-                        game.prefDimW = 20;
-                        game.prefDimH = 12;
-                        game.startLevelTime = 60000;
-                    }
-                    game.camera.scrollable = false;
-                    game.competitiveMode = true;
-                    game.updateWindowSize();
-                    game.startGame();
-                    break;
-                case 2:
                     game.gameState = 'scores'
                     break;
-                case 3:
+                case 2:
                     game.gameState = 'options'
                     break;
             }
