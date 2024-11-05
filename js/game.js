@@ -182,12 +182,8 @@ class Game {
             this.spawnCounter-=millis;
             if(this.spawnCounter <= 0){  
                 this.spawnCounter = this.spawnRate;
-                spawnMonster(null, true); //player.pos to stop spawning near the player
-                if(this.levelTime>0) {
-                    this.spawnRate-=this.sandboxMode?0:60000000/this.startLevelTime;
-                    this.spawnRate=Math.max(this.spawnRate,0);
-                } else {
-                    this.spawnRate = this.sandboxMode?5000:100;
+                if (this.monsters.length<50) {
+                    spawnMonster(null, true); //player.pos to stop spawning near the player
                 }
             }    
             this.updateTimes.push(performance.now() - updateStart);
