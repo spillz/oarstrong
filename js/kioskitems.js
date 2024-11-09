@@ -1,4 +1,11 @@
-class KioskPickup {
+//@ts-check
+
+import { randomRange, Vec2 } from "./util";
+import { entityItemIds } from "./sprites";
+import { Drone, Fist, Glider, GrappleGun, Grenade, Gun, JetPack, PowerSaber, Rifle, RocketLauncher, Shield, Shotgun, Wrench } from "./inventory";
+/**@typedef {import('./game').Game} Game */
+
+export class KioskPickup {
     constructor(pos, sprite) {
         this.pos = new Vec2(pos);
         this.sprite = sprite;
@@ -9,12 +16,16 @@ class KioskPickup {
     getDisplayY() {
         return this.pos.y+2.0/16;
     }
-    draw() {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    draw(game) {
         game.sprites.entitiesItems.drawScaled(this.sprite, this.getDisplayX(), this.getDisplayY(), 0.5);
     }
 }
 
-class HealthPickup extends KioskPickup {
+export class HealthPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Health);
     }
@@ -26,7 +37,7 @@ class HealthPickup extends KioskPickup {
     }    
 }
 
-class FistPickup extends KioskPickup {
+export class FistPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Fist);
     }
@@ -41,7 +52,7 @@ class FistPickup extends KioskPickup {
 }
 
 
-class GunPickup extends KioskPickup {
+export class GunPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Gun);
     }
@@ -56,7 +67,7 @@ class GunPickup extends KioskPickup {
     }    
 }
 
-class ShotgunPickup extends KioskPickup {
+export class ShotgunPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Shotgun);
     }
@@ -71,7 +82,7 @@ class ShotgunPickup extends KioskPickup {
     }    
 }
 
-class RiflePickup extends KioskPickup {
+export class RiflePickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.AssaultRifle);
     }
@@ -86,7 +97,7 @@ class RiflePickup extends KioskPickup {
     }    
 }
 
-class RocketLauncherPickup extends KioskPickup {
+export class RocketLauncherPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.RocketLauncher);
     }
@@ -102,7 +113,7 @@ class RocketLauncherPickup extends KioskPickup {
 }
 
 
-class GrenadePickup extends KioskPickup {
+export class GrenadePickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Grenade);
     }
@@ -117,7 +128,7 @@ class GrenadePickup extends KioskPickup {
     }    
 }
 
-class PowerSaberPickup extends KioskPickup {
+export class PowerSaberPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.VibroBlade);
     }
@@ -132,7 +143,7 @@ class PowerSaberPickup extends KioskPickup {
 }
 
 
-class JetPackPickup extends KioskPickup {
+export class JetPackPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.JetPack);
     }
@@ -147,7 +158,7 @@ class JetPackPickup extends KioskPickup {
     }    
 }
 
-class WrenchPickup extends KioskPickup {
+export class WrenchPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Wrench);
     }
@@ -162,7 +173,7 @@ class WrenchPickup extends KioskPickup {
     }    
 }
 
-class GrappleGunPickup extends KioskPickup {
+export class GrappleGunPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.GrappleGun);
     }
@@ -176,7 +187,7 @@ class GrappleGunPickup extends KioskPickup {
     }    
 }
 
-class DronePickup extends KioskPickup {
+export class DronePickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Drone);
     }
@@ -191,7 +202,7 @@ class DronePickup extends KioskPickup {
 
 }
 
-class ShieldPickup extends KioskPickup {
+export class ShieldPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Shield);
     }
@@ -207,7 +218,7 @@ class ShieldPickup extends KioskPickup {
 
 }
 
-class GliderPickup extends KioskPickup {
+export class GliderPickup extends KioskPickup {
     constructor(pos) {
         super(pos, entityItemIds.Glider);
     }

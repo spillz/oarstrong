@@ -1,247 +1,246 @@
-class Behavior {
-    update(player, millis) {
+//@ts-check
 
-    }
-    entry(player) {
+import { initializeControlStates } from "./controllers";
 
-    }
-    exit(player) {
-
-    }
-    animate(player, millis) {
-
-    }
-}
+import { ActiveInventory, Inventory } from "./inventory";
+import { Rect, Timer, Vec2, choose } from "./util";
+import { Monster } from "./monster";
+import { baseSetIds, entityItemIds } from "./sprites";
+import { Void } from "./tile";
+/**@typedef {import('./game').Game} Game */
 
 
-class Walking extends Behavior { //Walking/running
-    update(player, millis) {
-        player.runCheck(millis);
-        player.entityInteract();
-        if(player.stunTimer.finished()) {
-            player.walkCheck(millis, player.running);
-            player.cycleInventoryCheck(millis);
-        }
-        if(!player.aiming) {
-            player.tileInteract(millis)
-            if(player.activeState!=this)
-                return;
-        }
-        player.jumpCheck(millis);
+// class Walking extends Behavior { //Walking/running
+//     update(player, millis) {
+//         player.runCheck(millis);
+//         player.entityInteract();
+//         if(player.stunTimer.finished()) {
+//             player.walkCheck(millis, player.running);
+//             player.cycleInventoryCheck(millis);
+//         }
+//         if(!player.aiming) {
+//             player.tileInteract(millis)
+//             if(player.activeState!=this)
+//                 return;
+//         }
+//         player.jumpCheck(millis);
     
-        if(player.fallCheck()) player.setState(player.states.falling);
-    }
+//         if(player.fallCheck()) player.setState(player.states.falling);
+//     }
 
-}
+// }
 
-class Falling  extends Behavior { //In midair (rising or falling), fixed gravity, direction changes allowed
-    entry(player) {
-        this.fromJump = !player.controlStates['jump'];
-        this.initialFacing = player.facing;
-    }
+// class Falling  extends Behavior { //In midair (rising or falling), fixed gravity, direction changes allowed
+//     entry(player) {
+//         this.fromJump = !player.controlStates['jump'];
+//         this.initialFacing = player.facing;
+//     }
 
-    exit(player) {
-    }
+//     exit(player) {
+//     }
 
-    update(player, millis) {
-        if(player.stunTimer.finished()) {
-            player.entityInteract();
-            let fast = this.initialFacing==player.facing && player.running;
-            if(!fast) player.running=false;
+//     update(player, millis) {
+//         if(player.stunTimer.finished()) {
+//             player.entityInteract();
+//             let fast = this.initialFacing==player.facing && player.running;
+//             if(!fast) player.running=false;
 
-            if(player.stunTimer.finished()) {
-                player.walkCheck(millis, fast);
-                player.cycleInventoryCheck(millis);
-            }
+//             if(player.stunTimer.finished()) {
+//                 player.walkCheck(millis, fast);
+//                 player.cycleInventoryCheck(millis);
+//             }
                 
-            // jump
-            if(this.fromJump && player.stateTimer.elapsed<100) {
-                player.jumpCheck(millis);
-            }
+//             // jump
+//             if(this.fromJump && player.stateTimer.elapsed<100) {
+//                 player.jumpCheck(millis);
+//             }
 
-            // Tile interactions pressing up/down
-            player.tileInteract(millis);
+//             // Tile interactions pressing up/down
+//             player.tileInteract(millis);
 
-        }
+//         }
 
-        if(!player.jumpTimer.finished() && player.vel.y<0 && !player.controlStates['jump']) { //Kill the jump for early release
-            player.vel.y *= 0.5 ** (millis/15);
-        }
+//         if(!player.jumpTimer.finished() && player.vel.y<0 && !player.controlStates['jump']) { //Kill the jump for early release
+//             player.vel.y *= 0.5 ** (millis/15);
+//         }
 
-        // check we are still falling
-        if(!player.fallCheck()) {
-        //Vibrate -- hard coding velocity threshold
-            if(Math.abs(player.vel.y)>0.01 && player.vel.y==0) {
-                player.controller.vibrate(20*Math.abs(player.vel.y),20*Math.abs(player.vel.y),50);
-            }
-            player.vel.y = 0;
-            player.setState(player.states.walking);
-            return;
-        } 
-        if(player.vel.y>=0) { //check if falling onto a ledge
-            for(let tbelow of game.tiles.contacters(player.bounds())) {
-                if(tbelow.standable && game.tiles.above(tbelow).passable && !game.tiles.above(tbelow).climbable) {
-                    let ycut = player.bounds().bottom
-                    if(ycut>tbelow.y && ycut - player.vel.y*millis<=tbelow.y) {
-                        player.pos.y -= ycut - tbelow.y;
-                        player.vel.y = 0;
-                        player.setState(player.states.walking);
-                        return;
-                    }
-                }
-            }
-        }
-        // gravity
-        player.vel.y = Math.min(player.maxFallSpeed, player.vel.y + 1.0/4800*millis/15);
-    }
+//         // check we are still falling
+//         if(!player.fallCheck()) {
+//         //Vibrate -- hard coding velocity threshold
+//             if(Math.abs(player.vel.y)>0.01 && player.vel.y==0) {
+//                 player.controller.vibrate(20*Math.abs(player.vel.y),20*Math.abs(player.vel.y),50);
+//             }
+//             player.vel.y = 0;
+//             player.setState(player.states.walking);
+//             return;
+//         } 
+//         if(player.vel.y>=0) { //check if falling onto a ledge
+//             for(let tbelow of game.tiles.contacters(player.bounds())) {
+//                 if(tbelow.standable && game.tiles.above(tbelow).passable && !game.tiles.above(tbelow).climbable) {
+//                     let ycut = player.bounds().bottom
+//                     if(ycut>tbelow.y && ycut - player.vel.y*millis<=tbelow.y) {
+//                         player.pos.y -= ycut - tbelow.y;
+//                         player.vel.y = 0;
+//                         player.setState(player.states.walking);
+//                         return;
+//                     }
+//                 }
+//             }
+//         }
+//         // gravity
+//         player.vel.y = Math.min(player.maxFallSpeed, player.vel.y + 1.0/4800*millis/15);
+//     }
 
-}
+// }
 
-class Climbing extends Behavior { //Climbing ladders, trees etc.
-    update(player, millis) {
-        if(!player.stunTimer.finished()) { //fall off climbable if stunned
-            player.setState(player.states.falling);
-            return;
-        }
+// class Climbing extends Behavior { //Climbing ladders, trees etc.
+//     update(player, millis) {
+//         if(!player.stunTimer.finished()) { //fall off climbable if stunned
+//             player.setState(player.states.falling);
+//             return;
+//         }
 
-        player.entityInteract();
+//         player.entityInteract();
 
-        if(player.controlStates['up']) player.vel.y = -player.topSpeed*0.75;
-        else if(player.controlStates['down']) player.vel.y = player.topSpeed*0.75;
-        else player.vel.y = 0;
+//         if(player.controlStates['up']) player.vel.y = -player.topSpeed*0.75;
+//         else if(player.controlStates['down']) player.vel.y = player.topSpeed*0.75;
+//         else player.vel.y = 0;
 
-        if(player.stunTimer.finished()) {
-            player.walkCheck(millis);
-            player.cycleInventoryCheck(millis);
-            player.jumpCheck(millis);
-        }
+//         if(player.stunTimer.finished()) {
+//             player.walkCheck(millis);
+//             player.cycleInventoryCheck(millis);
+//             player.jumpCheck(millis);
+//         }
 
-        let on_a_climbable=false;
-        for(let t of game.tiles.colliders(player.bounds())) {
-            if(t.climbable) {
-                on_a_climbable = true;
-                break;
-            }
-        }
-        if(!on_a_climbable) {
-            if(player.fallCheck(millis)) player.setState(player.states.falling);
-            else player.setState(player.states.walking);
-        }
+//         let on_a_climbable=false;
+//         for(let t of game.tiles.colliders(player.bounds())) {
+//             if(t.climbable) {
+//                 on_a_climbable = true;
+//                 break;
+//             }
+//         }
+//         if(!on_a_climbable) {
+//             if(player.fallCheck(millis)) player.setState(player.states.falling);
+//             else player.setState(player.states.walking);
+//         }
     
-    }
+//     }
 
-}
+// }
 
-class Driving extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
-    entry(player) {
-        this.vehicle = null; //controlling entity
-    }
-    update(player, millis) {
-        player.entityInteract();
+// class Driving extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
+//     entry(player) {
+//         this.vehicle = null; //controlling entity
+//     }
+//     update(player, millis) {
+//         player.entityInteract();
 
-    }
+//     }
 
-}
+// }
 
-class Dead extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
-    entry(player) {
-        player.dead = true;
-    }
-    exit(player) {
-        player.dead = false;
-    }
-    update(player, millis) {
-        //friction
-        if(player.vel.y==0) player.vel.x *= 0.95**(millis/15);
-        // gravity
-        player.vel.y = Math.min(player.maxFallSpeed, player.vel.y + 1.0/4800*millis/15);
-    }
+// class Dead extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
+//     entry(player) {
+//         player.dead = true;
+//     }
+//     exit(player) {
+//         player.dead = false;
+//     }
+//     update(player, millis) {
+//         //friction
+//         if(player.vel.y==0) player.vel.x *= 0.95**(millis/15);
+//         // gravity
+//         player.vel.y = Math.min(player.maxFallSpeed, player.vel.y + 1.0/4800*millis/15);
+//     }
 
-}
+// }
 
-class Escaped extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
-    entry(player) {
-        player.escaped = true;
-    }
-    exit(player) {
-        player.escaped = false;
-    }
-    update(player, millis) {
+// class Escaped extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
+//     entry(player) {
+//         player.escaped = true;
+//     }
+//     exit(player) {
+//         player.escaped = false;
+//     }
+//     update(player, millis) {
 
-    }
+//     }
 
-}
+// }
+
+//Motion states
+const STATE_WALK  = 0;
+const STATE_STUN  = 1;
+const STATE_DASH  = 2;
+const STATE_DODGE = 3;
+const STATE_STAND = 4;
+const STATE_DEAD  = 5
 
 
+export class Player extends Monster {
+    isPlayer = true;
+    boundingBox = new Rect([0.25,0.5,0.5,0.5]);
+    immunityTimer = new Timer(1000,1000);
+    selectedTimer = new Timer(500, 500);
+    hitTimer = new Timer(500,500);
+    stunTimer = new Timer(500,500);
+    jumpTimer = new Timer(0,0);
+    selectedSprite = null;
+    escaped = false;
+    running = false;
+    climbing = false;
+    aiming = false; //deactivates up/down player movement
+    dropFromGame = false;
+    startLevel = 0;
+    lastVel = new Vec2([0, 0]);
 
-class Player extends Monster{
+    //Player Attributes
+    maxHp = 4;
+    topSpeed = 1.0/400;
+    jumpSpeed = 1.0/135;
+    maxFallSpeed = 1.0/50;
+    airJumps = 0;
+    wallJumps = 0;
+    spikedBoots = 0;
+    chips = 0; 
+    dead = false;
+
+    //Game-related Attributes
+    score = 0;
+    deaths = 0;
+    pause = 0;
+
+    //Animation Attributes
+    lastFacing = 0;
+    lastFramePos = 0;
+    currentFrame = 0;
+    useTimer = new Timer(0);
+
+    // Hooks
+    hookHitModifier = [];
+    hookUpdate = [];
+
+    activeState = STATE_STAND;
+    stateTimer = new Timer();
+    
+    //State of controller
+    controller = null;
+
     constructor(playerId=-1, tile=null){
         super(tile, playerId, 3);
-        this.isPlayer = true;
-        this.boundingBox = new Rect([0.25,0.5,0.5,0.5]);
-        this.immunityTimer = new Timer(1000,1000);
-        this.selectedTimer = new Timer(500, 500);
-        this.hitTimer = new Timer(500,500);
-        this.stunTimer = new Timer(500,500);
-        this.jumpTimer = new Timer(0,0);
-        this.selectedSprite = null;
+        /**@type {ActiveInventory} */
         this.inventory = new ActiveInventory(this);
+        /**@type {Inventory} */
         this.passiveInventory = new Inventory(this);
-        this.escaped = false;
-        this.running = false;
-        this.climbing = false;
-        this.aiming = false; //deactivates up/down player movement
-        this.dropFromGame = false;
-        this.startLevel = game.level;
-        this.lastVel = new Vec2(this.vel);
-        this.resources = new Resources();
 
-        //Player Attributes
-        this.maxHp = 4;
-        this.topSpeed = 1.0/400;
-        this.jumpSpeed = 1.0/135;
-        this.maxFallSpeed = 1.0/50;
-        this.airJumps = 0;
-        this.wallJumps = 0;
-        this.spikedBoots = 0;
-        this.chips = 0; 
-        this.dead = false;
-
-        //Game-related Attributes
-        this.score = 0;
-        this.deaths = 0;
-        this.pause = 0;
-
-        //Animation Attributes
-        this.lastFacing = this.facing;
-        this.lastFramePos = 0;
-        this.currentFrame = 0;
-        this.useTimer = new Timer(0);
-
-        // Hooks
-        this.hookHitModifier = [];
-        this.hookUpdate = [];
-
-        //Motion states
-        this.states = {
-            walking: new Walking(this),
-            falling: new Falling(this),
-            climbing: new Climbing(this),
-            driving: new Driving(this),
-            escaped: new Escaped(this),
-            dead: new Dead(this),
-        }
-        this.activeState = this.states.walking;
-        this.stateTimer = new TimerUnlimited();
-        
-
-        //State of controller
-        this.controller = null;
-        this.controlStates = {...controlStates0};
-        this.newControlStates = {...controlStates0};
-        this.oldControlStates = {...controlStates0};
-
-        this.cycleSprite();
+        /**@type {ReturnType<initializeControlStates>} */
+        this.controlStates = {...initializeControlStates()};
+        /**@type {ReturnType<initializeControlStates>} */
+        this.newControlStates = {...initializeControlStates()};
+        /**@type {ReturnType<initializeControlStates>} */
+        this.oldControlStates = {...initializeControlStates()};
+    
+        // this.cycleSprite();
     }
     setWalkFrames() {
         //Animation data
@@ -250,105 +249,126 @@ class Player extends Monster{
             new Vec2([2,this.sprite]), new Vec2([5,this.sprite]), 
             new Vec2([6,this.sprite]), new Vec2([5,this.sprite])];
     }
-    cycleSprite() {
-        let takenSprites = other_players(this).map(pl => pl.sprite);
+    /**
+     * 
+     * @param {Game} game 
+     */
+    cycleSprite(game) {
+        let takenSprites = game.other_players(this).map(pl => pl.sprite[1]);
         while(true) {
-            this.sprite++;
-            if(this.sprite>=4) this.sprite = 0;    
-            if(takenSprites.includes(this.sprite)) continue;
+            this.sprite[1]++;
+            if(this.sprite[1]>=4) this.sprite[1] = 0;    
+            if(takenSprites.includes(this.sprite[1])) continue;
             break;
         }
         this.setWalkFrames();    
     }
-    set falling(fall) {
- //       if(fall && this.activeState!=this.states.falling) this.setState(this.states.falling);
- //       if(!fall && this.activeState!=this.states.walking) this.setState(this.states.walking);
-    }
-    get falling() {
-        return this.activeState==this.states.falling;
-    }
 
-    //Player states
-    // Standing
-    // Walking
-    // Running
-    // Jumping (same as falling?)
-    // Falling
-    // Climbing
-    // Using
-    // Interacting
-    // Stunned
-    // Dead
-
-    //substates
-    // Facing, Falling, Using, Interacting? <- e.g., can be both dead and falling
-
-    die(){
+    /**@type {Monster['die']} */
+    die(game){
         if(this.dead)
             return;
         this.dead = true;
         this.hp = 0;
         this.deaths++;
         let deathSound = choose(['dead1','dead2','dead3','dead4','dead5','dead6','dead7','dead8']);
-        this.setState(this.states.dead);
+        this.setState(game, STATE_DEAD);
         game.playSound(deathSound);
     }
 
-    revive() {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} state 
+     */
+    enterState(game, state) {
+
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} state 
+     */
+    exitState(game, state) {
+
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     */
+    updateState(game, millis) {
+        switch(this.activeState) {
+            case STATE_STAND:
+                break;
+            case STATE_WALK:
+                break;
+            case STATE_STUN:
+                break;
+            case STATE_DASH:
+                break;
+            case STATE_DODGE:
+                break;
+            case STATE_DEAD:
+            break;
+        }
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     */
+    revive(game) {
         this.dead = false;
-        this.setState(this.states.walking);
+        this.setState(game, STATE_WALK);
         this.hp = game.competitiveMode?this.maxHp:1;
     }
 
-    hit(damage, knockbackScale=0) {
-        if(game.competitiveMode && game.levelTime>this.startLevelTime-3000) //can't be hit in competitive mode in the first 3 seconds
-            return;
+    /**@type {Monster['hit']} */
+    hit(game, damage, knockbackScale=0) {
         if(!this.dead && !this.escaped && this.immunityTimer.finished()) {
             for(let i of this.hookHitModifier) {
                 [damage, knockbackScale] = i.hitModifier(damage, knockbackScale);
             }
-            super.hit(damage, knockbackScale);
+            super.hit(game, damage, knockbackScale);
             this.immunityTimer.reset();
             game.playSound("hit1");                                              
         }
     }
 
-    use(millis) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     */
+    use(game, millis) {
         this.useTimer.reset(millis);
     }
 
-    draw() {
+    /**@type {Monster['draw']} */
+    draw(game) {
         if(this.escaped) 
             return;
-        let sprite;
+        let sprite = [0,0];
         if(this.dead) {
-            sprite = new Vec2([1, this.sprite]);
+            sprite = [1, this.sprite[1]];
             this.currentFrame = 0;
             this.lastFramePos = this.pos.x;
         }
         else if(!this.useTimer.finished()) {
-            sprite = new Vec2([4, this.sprite]);
+            sprite = [4, this.sprite[1]];
             this.currentFrame = 0;
             this.lastFramePos = this.pos.x;
         }
-        else if(this.activeState==this.states.falling) {
-            sprite = new Vec2([4, this.sprite]);
+        else if(this.activeState==STATE_STUN) {
+            sprite = [4, this.sprite[1]];
             this.currentFrame = 0;
             this.lastFramePos = this.pos.x;
-        }
-        else if(this.activeState==this.states.climbing) {
-            if(this.currentFrame<8) {
-                this.currentFrame=8;
-                this.lastFramePos = this.pos.y;
-            }
-            if(this.currentFrame>=8 && Math.floor(Math.abs(this.pos.y-this.lastFramePos)*8)) {
-                this.currentFrame = this.currentFrame!=8 ? 8:9;
-                this.lastFramePos = this.pos.y;
-            }
-            sprite = new Vec2([this.currentFrame, this.sprite]);
         }
         else if(this.vel.x==0) {
-            sprite = new Vec2([0, this.sprite]);
+            sprite = [0, this.sprite[1]];
             this.currentFrame = 0;
             this.lastFramePos = this.pos.x;
         }
@@ -368,29 +388,41 @@ class Player extends Monster{
             game.sprites.entitiesItems.drawScaled(this.selectedSprite, this.pos.x+0.25,  this.pos.y-0.25, 0.5);
         }
         //Show player in current state
-        game.sprites.players.draw(sprite, this.getDisplayX(), this.getDisplayY(), this.getFlipped());
+        game.sprites.players.draw([sprite[0],sprite[1]], this.getDisplayX(), this.getDisplayY(), this.getFlipped());
         //TODO: Show inventory attachment
         //this.inventory.activeItem().drawInPlay(this.currentFrame);
         if(!this.hitTimer.finished()) {
-            game.sprites.entitiesItems.draw(entityItemIds.Strike, this.getDisplayX(),  this.getDisplayY(), this.getFlipped())
+            if (baseSetIds.Strike.length===2)
+            game.sprites.base.draw(baseSetIds.Strike, this.getDisplayX(),  this.getDisplayY(), this.getFlipped())
         }
         this.lastFacing = this.facing;
     }
 
-    drawHUD(pos) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Vec2} pos 
+     */
+    drawHUD(game, pos) {
         if(game.competitiveMode) {
-            drawTileText(""+Math.floor(this.score), 0.5*game.tileSize, pos, "White"); // Text for hp game.level 
+            game.drawTileText(""+Math.floor(this.score), 0.5*game.tileSize, pos, "White"); // Text for hp game.level 
             pos = pos.add([1,0]);
         }
-        game.sprites.players.draw([1*this.dead,this.sprite], pos.x, pos.y);
+        game.sprites.players.draw([this.dead?1:0,this.sprite[1]], pos.x, pos.y);
         let pos1 = pos.add([1,0]);
-        game.sprites.entitiesItems.draw(entityItemIds.Health, pos1.x,pos1.y); //Draw hp game.level
-        drawTileText(""+Math.ceil(this.hp), 0.5*game.tileSize, pos1, "White"); // Text for hp game.level 
-        let pos2 = pos1.add([1,0]);
-        this.resources.drawHUD(pos2, this);
+        if (entityItemIds.Health.length===2) {
+            game.sprites.entitiesItems.draw(entityItemIds.Health, pos1.x,pos1.y); //Draw hp game.level
+        }
+        game.drawTileText(""+Math.ceil(this.hp), 0.5*game.tileSize, pos1, "White"); // Text for hp game.level 
     }
 
-    update(millis){  
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     * @returns 
+     */
+    update(game, millis){  
         if(this.escaped)
             return;
         let oldVel = new Vec2(this.vel);
@@ -404,16 +436,16 @@ class Player extends Monster{
         this.selectedTimer.tick(millis);
 
         //Updates based on player state
-        this.activeState.update(this, millis);
+        this.updateState(game, millis);
 
         //Inventory item updates -- only the active item and items with explicit update hooks
-        this.inventory.activeItem().update(millis, this);
+        this.inventory.activeItem().update(game, millis, this);
         for(let hu of this.hookUpdate) {
-            hu.update(millis, this);
+            hu.update(game, millis, this);
         }
 
-        if(this.activeState != this.states.dead && this.pos.y>game.tiles.dimH+3) {
-            this.die();
+        if(this.activeState != STATE_DEAD && this.pos.y>game.tiles.dimH+3) {
+            this.die(game);
         }
 
         this.lastVel = new Vec2(this.vel);
@@ -424,7 +456,7 @@ class Player extends Monster{
 
     }
 
-    walkCheck(millis, running) {
+    walkCheck(game, millis, running) {
         // left
         if(this.controlStates['left']) {
             this.vel.x = Math.max(-this.topSpeed*(running? 2.0:1.0), this.vel.x - 1.0/1600*millis/15);
@@ -465,18 +497,18 @@ class Player extends Monster{
         }
     }
 
-    cycleInventoryCheck(millis) {
+    cycleInventoryCheck(game, millis) {
         //cycle inventory
         if(this.controlStates["cycle"] && !this.oldControlStates["cycle"]) {
             let item = this.inventory.next();
             this.selectedTimer.reset(500);
             this.selectedSprite = item.sprite;
             this.aiming = false;
-            this.use(0);
+            this.use(game, 0);
         }   
     }
 
-    fallCheck(millis) {
+    fallCheck(game, millis) {
         // check falling -- player is falling unless they are in contact with a block below them
         // let isFalling = true;
         // for(let t of game.tiles.contacters(this.bounds())) {
@@ -489,32 +521,32 @@ class Player extends Monster{
         return false;
     }
 
-    runCheck() {
+    runCheck(game) {
         // running
         if(!this.controlStates['run']) this.running = false;
         else this.running = true;
     }
 
-    jumpCheck() {
+    jumpCheck(game) {
         // jump
         if(!this.oldControlStates['jump'] && this.controlStates['jump']){
             this.vel.y = -this.jumpSpeed;
-            this.setState(this.states.falling);
+            this.setState(game, STATE_DODGE);
             this.jumpTimer.reset(200);
             return;
         }
     }
 
-    entityInteract() {
+    entityInteract(game) {
         for(let k=0;k<game.items.length;k++) {
             if(this.bounds().collide(game.items[k].bounds())) {
-                game.items[k].entityCollide(this);
+                game.items[k].entityCollide(game, this);
                 if(!this.aiming) {
                     if(this.controlStates['up']) {
-                        game.items[k].entityInteract(this, 'up');
+                        game.items[k].entityInteract(game, this, 'up');
                     }
                     if(this.controlStates['down']) {
-                        game.items[k].entityInteract(this, 'down');
+                        game.items[k].entityInteract(game, this, 'down');
                     }
                 }
             }
@@ -522,7 +554,7 @@ class Player extends Monster{
 
     }
 
-    tileInteract(millis) {
+    tileInteract(game, millis) {
         if(this.controlStates['up']) {
             let t=game.tiles.closestTile(this.bounds());
             if(!(t instanceof Void)) {
@@ -559,10 +591,14 @@ class Player extends Monster{
         }
     }
 
-    setState(state) {
-        this.activeState.exit(this);
-        this.activeState = state;
-        this.activeState.entry(this);
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} state 
+     */
+    setState(game, state) {
+        this.exitState(game, this.activeState);
+        this.enterState(game, state);
         this.stateTimer.reset();
     }
 }

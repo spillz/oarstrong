@@ -1,6 +1,12 @@
+//@ts-check
+
+/**@typedef {import('./game').Game} Game */
 
 //Global control states affected by all controllers
-controlStates = {
+/**@typedef {{[id:string]:boolean}} ControlStatesType */
+
+/**@type {ControlStatesType} */
+export var controlStates = {
     'left': false,
     'right': false,
     'up':false,
@@ -11,13 +17,29 @@ controlStates = {
     'camera':false,
     'menu':false,
 };
-controlStates0 = {... controlStates};
-oldControlStates = {... controlStates};
-newControlStates = {... controlStates};
+var controlStates0 = {... controlStates};
 
-lastController = null;
+export function initializeControlStates() {
+    return {...controlStates0};
+}
 
-defaultKeyMap = {
+/**@type {ControlStatesType} */
+export var oldControlStates = {... controlStates};
+/**@type {ControlStatesType} */
+export var newControlStates = {... controlStates};
+
+/**
+ * 
+ * @param {ControlStatesType} constrolStates 
+ */
+export function setOldControlStates(constrolStates) {
+    oldControlStates = {...controlStates};
+}
+
+/**@type {Controller|null} */
+export var lastController = null;
+
+export var defaultKeyMap = {
     'ArrowLeft': 'left',
     'ArrowRight': 'right',
     'ArrowUp': 'up',
@@ -40,46 +62,7 @@ defaultKeyMap = {
     'Escape': 'menu',
 }
 
-// page up	33
-// Space	32
-// page down	34
-// end	35
-// home	36
-// arrow left	37
-// arrow up	38
-// arrow right	39
-// arrow down	40
-
-// numpad 0	96
-// numpad 1	97
-// numpad 2	98
-// numpad 3	99
-// numpad 4	100
-// numpad 5	101
-// numpad 6	102
-// numpad 7	103
-// numpad 8	104
-// numpad 9	105
-// multiply	106
-// add	107
-// subtract	109
-// decimal point	110
-// divide	111
-
-defaultKeyMap2 = {
-    'a': 'left', //keypad left
-    'd': 'right', //keypad right
-    'w': 'up', //keypad up
-    's': 'down', //keypad down
-    ',': 'cycle', //keypad -
-    'm': 'use', //keypad +
-    ' ': 'jump', //keypad enter
-    '0': 'camera',
-    'Escape': 'menu',
-}
-
-
-class Controller {
+export class Controller {
     constructor() {
         this.controlStates = {... controlStates0}
         this.attach_to_player();
@@ -112,9 +95,15 @@ class Controller {
     } 
 }
 
-class KeyboardController extends Controller {
-    constructor(keyMap=null) {
+export class KeyboardController extends Controller {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Object<string, string>} keyMap 
+     */
+    constructor(game, keyMap=null) {
         super();
+        this.game = game;
         if(keyMap==null)
             keyMap = defaultKeyMap;
         this.keyMap = keyMap;
@@ -124,15 +113,15 @@ class KeyboardController extends Controller {
     }
     keyDownHandler(e){
         if(e.key=="p") { //Keyboard only shortcuts
-            game.fillScreen = !game.fillScreen;
-            game.updateWindowSize();
+            this.game.fillScreen = !this.game.fillScreen;
+            this.game.updateWindowSize();
         }
         if(e.key=="f") {
-            game.showFPS = !game.showFPS;
-            game.updateWindowSize();
+            this.game.showFPS = !this.game.showFPS;
+            this.game.updateWindowSize();
         }
         if(e.key=="G") { //capital G to avoid accidental keypress
-            game.cullOffCamera = !game.cullOffCamera;
+            this.game.cullOffCamera = !this.game.cullOffCamera;
         }
         if(e.key in this.keyMap)
             this.set(this.keyMap[e.key], true);
@@ -143,9 +132,15 @@ class KeyboardController extends Controller {
     }
 }
 
-class GamepadController extends Controller {
-    constructor(gamepad) {
+export class GamepadController extends Controller {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Gamepad} gamepad 
+     */
+    constructor(game, gamepad) {
         super();
+        this.game = game;
         this.gamepad = gamepad;
         this.thresh = 0.2;
         this.internalStates = {... this.controlStates};
@@ -159,7 +154,7 @@ class GamepadController extends Controller {
 //    e.gamepad.index, e.gamepad.id,
 //    e.gamepad.buttons.length, e.gamepad.axes.length);
     vibrate(intensity1, intensity2, duration) {
-        if(game.activePlayers.length==1) {
+        if(this.game.activePlayers.length==1) {
             //default vibration does not support intensity -- could simulate by staggering pulses over the duration
             window.navigator.vibrate(duration); 
         }
@@ -180,15 +175,20 @@ class GamepadController extends Controller {
     }
 }
 
-class GamepadManager {
+export class GamepadManager {
     gamepads = {};
-    constructor() {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    constructor(game) {
         let that = this;
+        this.game = game;
         window.addEventListener("gamepadconnected", function(e){that.connected(e)});
         window.addEventListener("gamepaddisconnected", function(e){that.disconnected(e)});
     }
     connected(e) {
-        this.gamepads[e.gamepad.index] = new GamepadController(e.gamepad);
+        this.gamepads[e.gamepad.index] = new GamepadController(this.game, e.gamepad);
     }
     disconnected(e) {
         let g = this.gamepads[e.gamepad.index];
@@ -235,19 +235,27 @@ class GamepadManager {
     }
 }
 
-class TouchController extends Controller {
-    constructor() {
+export class TouchController extends Controller {
+    /**@type {HTMLCanvasElement|undefined} */
+    canvas = undefined;
+    /**
+     * 
+     * @param {Game} game 
+     */
+    constructor(game) {
         super();
-        this.canvas = document.getElementById("canvas");
-        let canvas = this.canvas
+        this.game = game;
+        const canvas = document.getElementById("canvas");
+        if (canvas instanceof HTMLCanvasElement) {
+            this.canvas = canvas
+            let that = this;
+            canvas.addEventListener('touchstart', function(ev){that.process_touchstart(ev);}, false);
+            canvas.addEventListener('touchmove', function(ev){that.process_touchmove(ev);}, false);
+            canvas.addEventListener('touchcancel', function(ev){that.process_touchend(ev);}, false);
+            canvas.addEventListener('touchend', function(ev){that.process_touchend(ev);}, false);
+            document.addEventListener('backbutton', function(ev){that.process_back(ev);}, true);
+        }
         // Register touch event handlers
-        let that = this;
-        canvas.addEventListener('touchstart', function(ev){that.process_touchstart(ev);}, false);
-        canvas.addEventListener('touchmove', function(ev){that.process_touchmove(ev);}, false);
-        canvas.addEventListener('touchcancel', function(ev){that.process_touchend(ev);}, false);
-        canvas.addEventListener('touchend', function(ev){that.process_touchend(ev);}, false);
-        document.addEventListener('backbutton', function(ev){that.process_back(ev);}, true);
-        navigator.app
         this.dPad = [-1,0,0];
         this.butJump = [-1,0,0];
         this.butInv = [-1,0,0];
@@ -297,12 +305,12 @@ class TouchController extends Controller {
                 let y=this.dPad[2];
                 for(let k of ["left","right","up","down","run","camera"])
                     this.set(k, false);
-                this.set("left", t.clientX<x-0.1*game.tileSize  && (t.clientX-x<-0.5*Math.abs(t.clientY-y)))
-                this.set("right", t.clientX>x+0.1*game.tileSize && (t.clientX-x>0.5*Math.abs(t.clientY-y)));
-                this.set("up", t.clientY<y-0.1*game.tileSize    && (t.clientY-y<-0.5*Math.abs(t.clientX-x)));
-                this.set("down", t.clientY>y+0.1*game.tileSize  && (t.clientY-y>0.5*Math.abs(t.clientX-x)));
-                this.set("run", t.clientX<x-game.tileSize || t.clientX>x+game.tileSize
-                                || t.clientY>y+game.tileSize || t.clientY<y-game.tileSize);
+                this.set("left", t.clientX<x-0.1*this.game.tileSize  && (t.clientX-x<-0.5*Math.abs(t.clientY-y)))
+                this.set("right", t.clientX>x+0.1*this.game.tileSize && (t.clientX-x>0.5*Math.abs(t.clientY-y)));
+                this.set("up", t.clientY<y-0.1*this.game.tileSize    && (t.clientY-y<-0.5*Math.abs(t.clientX-x)));
+                this.set("down", t.clientY>y+0.1*this.game.tileSize  && (t.clientY-y>0.5*Math.abs(t.clientX-x)));
+                this.set("run", t.clientX<x-this.game.tileSize || t.clientX>x+this.game.tileSize
+                                || t.clientY>y+this.game.tileSize || t.clientY<y-this.game.tileSize);
             }
         }
         ev.preventDefault();

@@ -1,93 +1,50 @@
-class Resources {
-    energy = 10;
-    alloy = 10;
-    biotics = 10;
-    maxEnergy = 10;
-    maxAlloy = 10;
-    maxBiotics = 10;
-    constructor() {
-
-    }
-    canUse(energy, alloy, biotics) {
-        return energy<=this.energy && alloy<=this.alloy && biotics<=this.biotics
-    }
-    maxUse(energy, alloy, biotics) {
-        return Math.floor(
-            Math.min(
-                this.energy/energy,
-                this.alloy/alloy,
-                this.biotics/biotics
-            )
-        )
-    }
-    use(energy, alloy, biotics) {
-        if(!this.canUse(energy, alloy, biotics)) return false
-        this.energy-=energy;
-        this.alloy-=alloy;
-        this.biotics-=biotics;
-        return true;
-    }
-    upgrade(energy, alloy, biotics) {
-        if(energy>0) {
-            this.maxEnergy += energy;
-            this.energy = this.maxEnergy;
-        }
-        if(biotics>0) {
-            this.maxBiotics += biotics;
-            this.biotics = this.maxBiotics;
-        }
-        if(alloy>0) {
-            this.maxAlloy += alloy;
-            this.alloy = this.maxAlloy;
-        }
-    }
-    replenish(energy, alloy, biotics) {
-        if(energy) this.energy = this.maxEnergy;
-        if(alloy) this.alloy = this.maxAlloy;
-        if(biotics) this.biotics = this.maxBiotics;
-    }
-    drawHUD(pos, player) {
-        function renderBar(v, color, offset) {
-            let value = Math.floor(14*v)/16
-            game.ctx.beginPath();
-            game.ctx.fillStyle = color;
-            game.ctx.rect(
-                (pos[0]+offset)*game.tileSize + game.gameOffsetY + game.shakeY, 
-                (1-value+pos[1]-1/16)*game.tileSize + game.gameOffsetY + game.shakeY, 
-                4/16*game.tileSize, 
-                value*game.tileSize);
-            game.ctx.fill();    
-        }
-        renderBar(this.energy/this.maxEnergy, 'purple', 0);
-        renderBar(this.alloy/this.maxAlloy, 'orange', 5/16);
-        renderBar(this.biotics/this.maxBiotics, 'lime', 10/16);
-    }
-}
+//@ts-check
+import { getRandomInt, Vec2 } from './util';
+import { Entity } from './entity';
+import { Boom, LiveDrone, LiveGrenade, LiveRocket, MonsterBoom, Reticle, SaberStrike, Shot, ShotFrags } from './entity_items';
+import { entityItemIds } from './sprites';
+import { Player } from './player';
+import { Exit, Floor, Kiosk } from './tile';
+/**@typedef {import('./game').Game} Game */
 
 
-class Inventory extends Array {
+export class Inventory extends Array {
+    /**
+     * 
+     * @param {Player} player 
+     * @param {InventoryItem[]|null} items 
+     */
     constructor(player,items=null) {
         super();
         this.player = player;
         if(items!=null)
             for(let i of items)
                 this.push(i);
-        this.setPositions()
     }
-    setPositions() {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    setPositions(game) {
         let base = (game.camera.scrollable?game.camera.viewPortW:game.dimW);
         for(let i=0;i<this.length;i++) {
             this[i].pos.x = base + i%4;
             this[i].pos.y = 5 + Math.floor(i/4);
         }
     }
-    get(itemType) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {*} itemType 
+     * @returns 
+     */
+    get(game, itemType) {
         for(let i=0;i<this.length;i++)
             if(this[i] instanceof itemType) {
                 return this[i];
             }
         let item = new itemType(this);
-        this.add(item);
+        this.add(game, item);
         return item;
     }
     contains(itemType) {
@@ -98,16 +55,26 @@ class Inventory extends Array {
         }
         return false;
     }
-    add(item) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {InventoryItem} item 
+     */
+    add(game, item) {
         this.push(item);
-        this.setPositions();
+        this.setPositions(game);
         item.registerHooks(this.player); //todo: deregistor hooks??
     }
-    remove(item) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {InventoryItem} item 
+     */
+    remove(game, item) {
         for(let i=0;i<this.length;i++) {
             if (this[i]==item) {
                 this.splice(i,1);
-                this.setPositions()
+                this.setPositions(game);
                 return;
             }
         }
@@ -129,7 +96,7 @@ class Inventory extends Array {
     }
 }
 
-class ActiveInventory extends Inventory {
+export class ActiveInventory extends Inventory {
     next() {
         for(let i=0;i<this.length;i++)  {
             if (this[i].selected){
@@ -156,51 +123,74 @@ class ActiveInventory extends Inventory {
 }
 
 
-class InventoryItem extends Entity{
+export class InventoryItem extends Entity{
     constructor(sprite) {
         super(null, sprite)
         this.selected = false;
+        this.count = 0;
     }
-    draw(pos, player) {
-        game.sprites.entitiesItems.draw(this.sprite, pos.x,  pos.y);
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Vec2} pos 
+     * @param {Player} player 
+     */
+    drawIconsForPlayer(game, pos, player) {
+        if (this.sprite.length===2) {
+            game.sprites.entitiesItems.draw(this.sprite, pos.x,  pos.y);
+        }
         if(this.selected) {
+            if (entityItemIds.InventorySelector.length===2)
             game.sprites.entitiesItems.draw(entityItemIds.InventorySelector, pos.x,  pos.y);
         }
         const value = this.value(player);
-        if(value!='') {
-           drawTileText(""+Math.floor(value), 0.5*game.tileSize, pos, "White"); 
+        if(value!==null) {
+           game.drawTileText(""+Math.floor(value), 0.5*game.tileSize, pos, "White"); 
         }
     }
+    /**
+     * 
+     * @param {Player} player 
+     * @returns {number|null}
+     */
     value(player) {
-        return '';
+        return null;
     }
-    update(millis, player) {
+    update(game, millis, player) {
     }
     registerHooks(player) {        
     }
 }
 
-class PassiveInventoryItem extends Entity {
+export class PassiveInventoryItem extends Entity {
     constructor(sprite) {
         super(null, sprite)
         this.selected = false;
         this.selectedTimer = 0;
+        this.count = 0;
     }
+    /**
+     * 
+     * @param {Player} player 
+     * @returns {number|null}
+     */
     value(player) {
-        return '';
+        return null;
     }
-    draw(pos, player) {
-        game.sprites.entitiesItems.draw(this.sprite, pos.x,  pos.y);
+    drawIconsForPlayer(game, pos, player) {
+        if (this.sprite.length===2) {
+            game.sprites.entitiesItems.draw(this.sprite, pos.x,  pos.y);
+        }
         const value = this.value(player);
-        if(value!='') {
-           drawTileText(""+Math.floor(value), 0.5*game.tileSize, pos, "White"); // Text for hp level 
+        if(value!==null) {
+           game.drawTileText(""+Math.floor(value), 0.5*game.tileSize, pos, "White"); // Text for hp level 
         }
     }
     registerHooks(player) {        
     }
  }
 
-class Fist extends InventoryItem {
+export class Fist extends InventoryItem {
     constructor() {
         super(entityItemIds.Fist);
         this.hitPower = 1;
@@ -210,7 +200,7 @@ class Fist extends InventoryItem {
         this.timer = 500;
     }
     value(player) {
-        return '';
+        return null;
     }
     upgrade(upType) {
         if(upType==1) {
@@ -220,8 +210,15 @@ class Fist extends InventoryItem {
             this.hitDamage+=0.5;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     * @param {Player} player 
+     * @returns 
+     */
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.elapsed += millis;
         if(player.oldControlStates['use'] || !player.newControlStates['use']) {
             return;
@@ -229,11 +226,12 @@ class Fist extends InventoryItem {
         if(this.elapsed<this.timer) {
             return;
         }
-        player.use(100);
-        let monsters = monsters_with_other_players(player);
-        let vt = (-player.controlStates['up'] + player.controlStates['down'])*0.5;
-        let hz = player.boundingBox.w*(player.facing*(vt==0) + 
-                    (-player.controlStates['left']+player.controlStates['right'])*(vt!=0));
+        player.use(game, 100);
+        let monsters = game.monsters_with_other_players(player);
+        let vt = (-(player.controlStates['up']?1:0) + (player.controlStates['down']?1:0))*0.5;
+        let vt0 = vt===0 ? 1 : 0;
+        let hz = player.boundingBox.w*(player.facing*vt0 + 
+                    (-(player.controlStates['left']?1:0)+(player.controlStates['right']?1:0))*vt0);
         let sh = new Vec2([hz, vt]);
         let b = player.bounds().shift(sh);
         for(let m of monsters) {
@@ -241,18 +239,18 @@ class Fist extends InventoryItem {
                 m.facing = player.facing;
                 m.falling = true;
                 m.stun(this.stunTime);
-                m.hit(this.hitDamage, player.facing*this.hitPower);
+                m.hit(game, this.hitDamage, player.facing*this.hitPower);
                 player.controller.vibrate(0.3,0.5,75);
                 this.elapsed = 0;
                 return; //only get to hit one monster
             }
         }
-        game.tiles.closestTile(b).hit(0.5, 'blunt');
+        game.tiles.closestTile(b).hit(game, 0.5, 'blunt');
     }
 }
 
 
-class Gun extends InventoryItem {
+export class Gun extends InventoryItem {
     constructor() {
         super(entityItemIds.Gun);
         this.lastShotTime = 2000;
@@ -272,8 +270,15 @@ class Gun extends InventoryItem {
             this.shotDamage++;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     * @param {Player} player 
+     * @returns 
+     */
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.lastShotTime += millis;
         if(!player.controlStates['use']) {
             return;
@@ -284,14 +289,11 @@ class Gun extends InventoryItem {
         if(this.lastShotTime<this.reloadSpeed) {
             return;
         }
-        if(!player.resources.canUse(this.energyUse,0,0)) {
-            return;
-        }
         if(!this.loaded) {
             game.playSound('gunReload');
             this.loaded=true;
         }
-        let angle = 180*(player.facing<0);
+        let angle = player.facing<0?180:0;
         if(player.controlStates['up']) {
             if(player.controlStates['left'] && !player.controlStates['right']) {
                 angle = 225;
@@ -307,7 +309,7 @@ class Gun extends InventoryItem {
             } else
                 angle = 90;
         }          
-        player.use(100);  
+        player.use(game, 100);  
         game.items.push(new Shot(player, this.shotDamage, angle, player.facing));
         if(this.shotDamage<=1) {
             game.playSound('gunFire1');
@@ -318,13 +320,12 @@ class Gun extends InventoryItem {
         }
         player.controller.vibrate(this.shotDamage*0.25,this.shotDamage*0.25,50);
 
-        player.resources.use(this.energyUse, 0 ,0);
         this.lastShotTime = 0;
         this.loaded=false;
     }
 }
 
-class Grenade extends InventoryItem {
+export class Grenade extends InventoryItem {
     constructor() {
         super(entityItemIds.Grenade);
         this.damage=3;
@@ -344,8 +345,8 @@ class Grenade extends InventoryItem {
             this.damage+=1;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.lastShotTime += millis;
         if(!player.resources.canUse(this.energyUse, this.alloyUse, this.bioticUse)) {
             return;
@@ -364,7 +365,7 @@ class Grenade extends InventoryItem {
         } else {
             vel = player.vel.add([player.facing*1.0/80,-1.0/300]);
         }
-        game.items.push(new LiveGrenade(player, this.damage, this.radius, player.facing, vel));
+        game.items.push(new LiveGrenade(game, player, this.damage, this.radius, player.facing, vel));
         player.use(100);
 
         player.resources.use(this.energyUse, this.alloyUse, this.bioticUse);
@@ -372,18 +373,19 @@ class Grenade extends InventoryItem {
     }
 }
 
-class Wrench extends InventoryItem {
+export class Wrench extends InventoryItem {
+    breakTime = 1000;
+    chargeTime = 5000;
+    energyUse = 2;
+    alloyUse = 0;
+    bioticUse = 0;
+    elapsed = 4000;
+    timer = 2000;
+    monsterBoom = true;
+    boomTime = 2000;
+    charges = 0;
     constructor() {
         super(entityItemIds.Wrench);
-        this.breakTime = 1000;
-        this.chargeTime = 5000;
-        this.energyUse = 2;
-        this.alloyUse = 0;
-        this.bioticUse = 0;
-        this.elapsed = 4000;
-        this.timer = 2000;
-        this.monsterBoom = true;
-        this.boomTime = 2000;
     }
     value(player) {
         return player.resources.maxUse(this.energyUse, this.alloyUse, this.bioticUse);
@@ -396,8 +398,8 @@ class Wrench extends InventoryItem {
             this.breakTime/=2;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.elapsed += millis;
         if(player.falling) { // to make less effective, block use if moving: player.controlStates['left'] || player.controlStates['right']
             return;
@@ -458,7 +460,7 @@ class Wrench extends InventoryItem {
     }
 }
 
-class JetPack extends InventoryItem {
+export class JetPack extends InventoryItem {
     constructor() {
         super(entityItemIds.JetPack);
         this.power = 1.0/400; //max velocity
@@ -469,14 +471,14 @@ class JetPack extends InventoryItem {
     }
     upgrade(upType) {
         if(upType==1) {
-            this.fuelUse[0] *= 0.9;
+            this.energyUse *= 0.9;
         }
         if(upType==2) {
             this.power*=1.2;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         if(!player.controlStates['use']) {
             return;
         }
@@ -501,7 +503,7 @@ class JetPack extends InventoryItem {
     }
 }
 
-class GrappleGun extends InventoryItem { //aimable grappling hook. upgradable range, speed of retraction, refresh rate
+export class GrappleGun extends InventoryItem { //aimable grappling hook. upgradable range, speed of retraction, refresh rate
     constructor() {
         super(entityItemIds.GrappleGun);
         this.grapple_vel = 1.0/60;
@@ -522,8 +524,8 @@ class GrappleGun extends InventoryItem { //aimable grappling hook. upgradable ra
             this.grapple_vel*=1.2;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         if(this.activeLine!=null) { //once line is active, the activeLine object tracks things
             return;
         }
@@ -548,17 +550,17 @@ class GrappleGun extends InventoryItem { //aimable grappling hook. upgradable ra
         if(!player.controlStates['use'] && player.oldControlStates['use']) {
             player.aiming = false;
             this.grappling = true;
-            this.activeLine = new GrappleLine(player, this, this.angle, this.grapple_vel, this.power, this.alloyUse);
-            player.use(100);
-            game.items.push(this.activeLine);
-            game.playSound('grappleFire');
-            player.controller.vibrate(0.25,0.25,50);
+            // this.activeLine = new GrappleLine(player, this, this.angle, this.grapple_vel, this.power, this.alloyUse);
+            // player.use(100);
+            // game.items.push(this.activeLine);
+            // game.playSound('grappleFire');
+            // player.controller.vibrate(0.25,0.25,50);
         }
     }
 
 }
 
-class RocketLauncher extends InventoryItem { //shoots explosive rockets
+export class RocketLauncher extends InventoryItem { //shoots explosive rockets
     constructor() {
         super(entityItemIds.RocketLauncher);
         this.lastShotTime = 6000;
@@ -582,8 +584,8 @@ class RocketLauncher extends InventoryItem { //shoots explosive rockets
             this.rocketDamage++;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.lastShotTime += millis;
         if(this.lastShotTime<this.reloadSpeed) {
             return;
@@ -596,7 +598,7 @@ class RocketLauncher extends InventoryItem { //shoots explosive rockets
             this.loaded=true;
         }
         if(player.controlStates['use'] && !player.oldControlStates['use']) {
-            this.angle = 180*(player.facing<0);
+            this.angle = player.facing<0?180:0;
             player.aiming = true;
             let reticle = new Reticle(player, this);
             game.items.push(reticle);
@@ -623,7 +625,7 @@ class RocketLauncher extends InventoryItem { //shoots explosive rockets
     }
 }
 
-class Rifle extends InventoryItem { //aimable long range attacks
+export class Rifle extends InventoryItem { //aimable long range attacks
     constructor() {
         super(entityItemIds.AssaultRifle);
         this.lastShotTime = 2000;
@@ -643,8 +645,8 @@ class Rifle extends InventoryItem { //aimable long range attacks
             this.shotDamage++;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.lastShotTime += millis;
 // TODO: not allowing shots while falling or running seemed harsh. Maybe we can play around with an accuracy concept
 //        if(player.falling || player.controlStates['left'] || player.controlStates['right'] || !player.controlStates['use'])
@@ -660,7 +662,7 @@ class Rifle extends InventoryItem { //aimable long range attacks
             this.loaded=true;
         }
         if(player.controlStates['use'] && !player.oldControlStates['use']) {
-            this.angle = 180*(player.facing<0);
+            this.angle = player.facing<0?180:0;
             player.aiming = true;
             let reticle = new Reticle(player, this);
             game.items.push(reticle);
@@ -689,7 +691,7 @@ class Rifle extends InventoryItem { //aimable long range attacks
 
 }
 
-class Shotgun extends InventoryItem { //shoots pellets with a blastable radius
+export class Shotgun extends InventoryItem { //shoots pellets with a blastable radius
     constructor() {
         super(entityItemIds.Shotgun);
         this.lastShotTime = 2000;
@@ -711,8 +713,8 @@ class Shotgun extends InventoryItem { //shoots pellets with a blastable radius
             this.shotDamage++;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.lastShotTime += millis;
         if(this.lastShotTime<this.reloadSpeed) {
             return;
@@ -727,7 +729,7 @@ class Shotgun extends InventoryItem { //shoots pellets with a blastable radius
         if(!player.controlStates['use']) {
             return;
         }
-        let angle = 180*(player.facing<0);
+        let angle = player.facing<0?180:0;
         if(player.controlStates['up']) {
             if(player.controlStates['left'] && !player.controlStates['right']) {
                 angle = 225;
@@ -754,7 +756,7 @@ class Shotgun extends InventoryItem { //shoots pellets with a blastable radius
 
 }
 
-class PowerSaber extends InventoryItem { //hit multiple enemies, longer range than the fist, special moves
+export class PowerSaber extends InventoryItem { //hit multiple enemies, longer range than the fist, special moves
     constructor() {
         super(entityItemIds.VibroBlade);
         this.hitPower = 0.25;
@@ -767,7 +769,7 @@ class PowerSaber extends InventoryItem { //hit multiple enemies, longer range th
         this.stunTime = 500;
         this.elapsed = 500;
         this.timer = 500;
-        this.sound = game.playSound('saberCharge', 0, true, false);
+        // this.sound = game.playSound('saberCharge', 0, true, false);
     }
     value(player) {
         return player.resources.maxUse(this.energyUse, 0, 0);
@@ -780,8 +782,8 @@ class PowerSaber extends InventoryItem { //hit multiple enemies, longer range th
             this.chargeBonus+=1.0;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         this.elapsed += millis;
         if(this.elapsed<this.timer) {
             return;
@@ -790,8 +792,8 @@ class PowerSaber extends InventoryItem { //hit multiple enemies, longer range th
             this.chargeElapsed += millis;
             player.use(100);
             if(!this.charged && this.chargeElapsed > this.chargeTime) {
-                this.sound.currentTime = 0;
-                this.sound.play();
+                // this.sound.currentTime = 0;
+                // this.sound.play();
                 this.charged = true;
             }
             if(this.charged) {
@@ -801,7 +803,7 @@ class PowerSaber extends InventoryItem { //hit multiple enemies, longer range th
         }
         if(player.oldControlStates['use'] && !player.controlStates['use']) {
             player.use(100);
-            let angle=180*(player.facing<0);
+            let angle=player.facing<0?180:0;
             if(player.controlStates['up']) {
                 if(player.controlStates['left']) {
                     angle = 225;
@@ -827,14 +829,14 @@ class PowerSaber extends InventoryItem { //hit multiple enemies, longer range th
                 hitDamage += this.chargeBonus;
                 player.resources.use(this.energyUse, 0, 0);
             }
-            let monsters = monsters_with_other_players(player);
+            let monsters = game.monsters_with_other_players(player);
             let hit = false;
             for(let m of monsters) {
                 if(!m.dead && strike.bounds().collide(m.hitBounds())) {
                     m.facing = player.facing;
                     m.falling = true;
                     m.stun(this.stunTime);
-                    m.hit(hitDamage, player.facing*this.hitPower);
+                    m.hit(game, hitDamage, player.facing*this.hitPower);
                     player.controller.vibrate(0.5,0.5,100);
                     hit = true;
                 }
@@ -842,7 +844,7 @@ class PowerSaber extends InventoryItem { //hit multiple enemies, longer range th
             if(!hit) {
                 game.tiles.closestTile(strike.bounds()).hit(hitDamage, 'cut');
             }
-            this.sound.pause();
+            // this.sound.pause();
             this.charged = false;
             this.elapsed = 0;
             this.chargeElapsed = 0;
@@ -850,7 +852,7 @@ class PowerSaber extends InventoryItem { //hit multiple enemies, longer range th
     }
 }
 
-class Drone extends InventoryItem { //flying assistant
+export class Drone extends InventoryItem { //flying assistant
     constructor() {
         super(entityItemIds.Drone);
         this.lastBuildTime = 11000;
@@ -862,6 +864,7 @@ class Drone extends InventoryItem { //flying assistant
         this.bioticUse = 1;
         this.damage = 1;
         this.radius = 1;
+        this.reloadSpeed = 2000;
     }
     value(player) {
         if(this.live) {
@@ -879,8 +882,8 @@ class Drone extends InventoryItem { //flying assistant
             this.flightTime+=1000;
         }
     }
-    update(millis, player) {
-        super.update(millis, player);
+    update(game, millis, player) {
+        super.update(game, millis, player);
         if(this.live) {
             return;
         }
@@ -906,20 +909,20 @@ class Drone extends InventoryItem { //flying assistant
     }
 }
 
-class ClimbingGloves extends InventoryItem { //climb walls and ceiling
+export class ClimbingGloves extends InventoryItem { //climb walls and ceiling
 
 }
 
 
 //Passive Items
-class Glider extends PassiveInventoryItem { //hold jump button in the air to descend slowly
+export class Glider extends PassiveInventoryItem { //hold jump button in the air to descend slowly
     constructor() {
         super(entityItemIds.Glider);
         this.glide_coef = 0.15; //max velocity
         this.arrestRate = 1; //how quickly speed is arrested
     }
     value(player) {
-        return '';
+        return null;
     }
     upgrade(upType) {
         if(upType==1) {
@@ -932,7 +935,7 @@ class Glider extends PassiveInventoryItem { //hold jump button in the air to des
     registerHooks(player) {        
         player.hookUpdate.push(this);
     }
-    update(millis, player) {
+    update(game, millis, player) {
         if(!player.controlStates['jump'])// && !player.controlStates['jump'])
             return;
 
@@ -944,15 +947,15 @@ class Glider extends PassiveInventoryItem { //hold jump button in the air to des
     }
 }
 
-class Boots extends PassiveInventoryItem { //jump height, double jump, wall jump, flip, roll, speed?
+export class Boots extends PassiveInventoryItem { //jump height, double jump, wall jump, flip, roll, speed?
 //TODO: Not clear if this should be one item or multiple items and whether they can all work together or compete
 }
 
-class Dog extends PassiveInventoryItem { //walking companion, attacks enemies
+export class Dog extends PassiveInventoryItem { //walking companion, attacks enemies
     
 }
 
-class Shield extends PassiveInventoryItem { //prevents damage, recharges, counterattacks
+export class Shield extends PassiveInventoryItem { //prevents damage, recharges, counterattacks
     constructor() {
         super(entityItemIds.Shield);
         this.elapsed = 0;
@@ -982,7 +985,7 @@ class Shield extends PassiveInventoryItem { //prevents damage, recharges, counte
         this.charge -= damage_absorbed;
         return [damage, knockbackScale];
     }
-    update(millis, player) {
+    update(game, millis, player) {
         if(this.charge < this.maxCharge) {
             this.elapsed += millis;
         }

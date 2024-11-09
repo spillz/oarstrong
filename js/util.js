@@ -1,49 +1,7 @@
-
-function screenshake(){
-    if(game.shakeAmount){
-        game.shakeAmount--;
-    }
-    let shakeAngle = Math.random()*Math.PI*2;
-    game.shakeX = Math.round(Math.cos(shakeAngle)*game.shakeAmount);
-    game.shakeY = Math.round(Math.sin(shakeAngle)*game.shakeAmount);
-}
-
-function drawText(text, size, centered, textY, color){
-    game.ctx.fillStyle = color;
-    game.ctx.font = size + "px monospace";
-    let textX;
-    if(centered){
-        textX = (game.canvas.width-game.ctx.measureText(text).width)/2;
-    }else{
-        textX = game.canvas.width-game.uiWidth*(game.tileSize-1);
-    }
-
-    game.ctx.fillText(text, textX, textY);
-}
-
-function drawTileText(text, text_size, pos, color){
-    game.ctx.fillStyle = color;
-    game.ctx.font = text_size + "px monospace";
-    let textY = (pos.y + 1 - (1-text_size/game.tileSize)/2)*game.tileSize + game.gameOffsetY + game.shakeY;
-    let textX = (pos.x + (1-game.ctx.measureText(text).width/game.tileSize)/2)*game.tileSize + game.gameOffsetX + game.shakeX;
-    game.ctx.fillText(text, textX, textY);
-}
-
-function nearestPlayer(pos) {
-    let bestd = 1e9;
-    let bestp = null;
-    for(let p of game.activePlayers) {
-        if(!p.dead) {
-            let d = p.pos.dist(pos);
-            bestp = d<bestd?p:bestp;
-            bestd = d<bestd?d:bestd;
-        }
-    }
-    return [bestp, bestd];
-}
+//@ts-check
 
 //TODO: This is a shitty way to find random places
-function tryTo(description, callback){
+export function tryTo(description, callback){
     for(let timeout=1000;timeout>0;timeout--){
         if(callback()){
             return;
@@ -52,65 +10,23 @@ function tryTo(description, callback){
     throw 'Timeout while trying to '+description;
 }
 
-function getRandomInt(m1, m2=0) {
+export function getRandomInt(m1, m2=0) {
     if(m2!=0)
         return m1 + Math.floor(Math.random() * (m2-m1));
     else
         return Math.floor(Math.random() * m1);
   }
 
-function getRandomPos(max1, max2) {
+export function getRandomPos(max1, max2) {
     return [getRandomInt(max1), getRandomInt(max2)];
 }
 
-function monsters_and_players(forcePlayers=true, exclude = null) {
-    if(!forcePlayers && (!game.competitiveMode || game.levelTime>game.startLevelTime-10000)) {
-        return game.monsters.filter(m => m!=exclude);
-    }
-    return game.monsters.concat(game.activePlayers).filter(m => m!=exclude);
-}
-
-
-function monsters_with_other_players(player) {
-    if(!game.competitiveMode || game.levelTime>game.startLevelTime-10000)
-        return game.monsters;
-    let i = game.activePlayers.indexOf(player);
-    let pl = game.activePlayers.slice(0,i).concat(game.activePlayers.slice(i+1));
-    let all = game.monsters.concat(pl);
-    return all;
-}
-
-function other_players(player) {
-    let i = game.activePlayers.indexOf(player);
-    return game.activePlayers.slice(0,i).concat(game.activePlayers.slice(i+1));
-}
-
-
-function remove(items, item) {
-    for(let i=0;i<items.length;i++) 
-        if (items[i]==item){
-            items.splice(i,1);
-            return;
-        }
-}
-
-function remove_dead(items) {
-    for(let k=items.length-1;k>=0;k--)
-        if(items[k].dead)
-            items.splice(k,1);
-}
-
-function remove_dropped(players) {
-    for(let k=players.length-1;k>=0;k--)
-        if(players[k].dropFromGame) {
-            players[k].controller.attach_to_player();
-            game.items.push(new DeadPlayer(players[k]));
-            players.splice(k,1);
-        }
-}
-
-
-function shuffle(array) {
+/**
+ * @template T
+ * @param {Array<T>} array 
+ * @returns 
+ */
+export function shuffle(array) {
     let currentIndex = array.length,  randomIndex;
   
     // While there remain elements to shuffle...
@@ -129,27 +45,15 @@ function shuffle(array) {
 }
 
 
-// function shuffle(arr){
-//     let temp, r;
-//     for (let i = 1; i < arr.length; i++) {
-//         r = randomRange(0,i);
-//         temp = arr[i];
-//         arr[i] = arr[r];
-//         arr[r] = temp;
-//     }
-//     return arr;
-// }
-
-
-function choose(array) {
+export function choose(array) {
     return array[Math.floor(Math.random() * array.length)];    
 }
 
 
-const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
+export const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
 
 
-class MathArray extends Array {
+export class MathArray extends Array {
     constructor(...arr) {
         if(arr.length==1 && arr[0] instanceof Array) {
             super(...arr[0]);
@@ -231,12 +135,12 @@ class MathArray extends Array {
         return new MathArray(super.filter(func));
     }
     dropNaN() {
-        return this.filter(el => el!=NaN);
+        return this.filter(el => !Number.isNaN(el));
     }
 }
 
 
-class Vec2 extends Array {
+export class Vec2 extends Array {
     constructor(vec){
         super();
         this[0] = vec[0];
@@ -274,9 +178,10 @@ class Vec2 extends Array {
     }
 }
 
-class Rect extends Array {
+export class Rect extends Array {
     constructor(rect){
-        super()
+        super();
+        this.length = 4;
         this[0] = rect[0];
         this[1] = rect[1];
         this[2] = rect[2];
@@ -326,7 +231,7 @@ class Rect extends Array {
         return this[1]+this[3]/2;        
     }
     get center() {
-        return new Vec2(this.center_x, this.center_y);
+        return new Vec2([this.center_x, this.center_y]);
     }
     shift(pos) {
         return new Rect([this.x+pos[0],this.y+pos[1],this.w,this.h]);
@@ -373,12 +278,12 @@ class Rect extends Array {
 }
 
 
-function randomRange(min, max){
+export function randomRange(min, max){
     return Math.floor(Math.random()*(max-min+1))+min;
 }
 
 
-function rightPad(textArray){
+export function rightPad(textArray){
     let finalText = "";
     textArray.forEach(text => {
         text+="";
@@ -391,7 +296,7 @@ function rightPad(textArray){
 }
 
 
-class Timer {
+export class Timer {
     constructor(time, elapsed=0) {
         this.elapsed = 0; //elapsed time on timer
         this.timer = time; //time when timer will be triggered
@@ -422,7 +327,7 @@ class Timer {
     }
 }
 
-class TimerUnlimited {
+export class TimerUnlimited {
     constructor() {
         this.elapsed = 0;
     }

@@ -1,4 +1,7 @@
-function getScores(){
+//@ts-check
+import { rightPad } from "./util.js";
+
+export function getScores(){
     if(localStorage["best_runs"]){
         return JSON.parse(localStorage["best_runs"]);
     }else{
@@ -6,20 +9,21 @@ function getScores(){
     }
 }
 
-function addScore(score, won){
+export function addScore(game, score, won){
     let scores = getScores();
     let scoreObject = {score: score, level: game.level, won: won};
     scores.push(scoreObject);
 
-    if(!game.sandboxMode)
+    if(!game.sandboxMode) {
         localStorage["best_runs"] = JSON.stringify(scores);
+    }
 }
 
-function drawScores(){
+export function drawScores(game){
     if(!game.competitiveMode) {
         let scores = getScores();
         if(scores.length){
-            drawText(
+            game.drawText(
                 rightPad(["LEVEL","SCORE","END"]),
                 18,
                 true,
@@ -35,7 +39,7 @@ function drawScores(){
 
             for(let i=0;i<Math.min(10,scores.length);i++){
                 let scoreText = rightPad([scores[i].level, scores[i].score, scores[i].won? "ESCAPED":"DIED"]);
-                drawText(
+                game.drawText(
                     scoreText,
                     18,
                     true,
@@ -46,7 +50,7 @@ function drawScores(){
         }
     } else
     {
-        drawText(
+        game.drawText(
             rightPad(["PLAYER","SCORE","DEATHS"]),
             18,
             true,
@@ -55,7 +59,7 @@ function drawScores(){
         );
         for(let i=0;i<game.activePlayers.length;i++){
             let scoreText = rightPad([i, game.activePlayers[i].score, game.activePlayers[i].deaths]);
-            drawText(
+            game.drawText(
                 scoreText,
                 18,
                 true,

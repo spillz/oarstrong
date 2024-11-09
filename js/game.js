@@ -1,69 +1,89 @@
-class Game {
-    constructor() {
-        this.timer_tick = null;
-        this.FPSframes = 0;
-        this.FPStime = 0;
-        this.FPS = 0;
-        this.updateTimes = new MathArray([]);
-        this.drawTimes = new MathArray([]);
-        this.updateMean = 0;
-        this.updateMax = 0;
-        this.drawMean = 0;
-        this.drawMax = 0;  
+//@ts-check
+import * as util from './util.js';
+import * as controllers from './controllers.js';
+import * as sprites from './sprites.js';
+import * as tilemap from './tilemap.js';
+import * as tile from './tile.js';
+import * as entity from './entity.js';
+import * as camera from './camera.js';
+import * as inventory from './inventory.js';
+import * as kioskitems from './kioskitems.js';
+import * as map from './map.js';
+import * as monster from './monster.js';
+import * as players from './player.js';
+import * as entityItems from './entity_items.js';
+import * as menu from './menu.js';
+import * as scores from './scores.js';
 
-        this.camera = new Camera();
-        this.fillScreen = false;
-        this.dimW = this.prefDimW = 44;
-        this.dimH = this.prefDimH = 26;
-        this.uiWidth = 0; //width in tiles of non-game portion of screen
-        this.uiHeight = 2; //height in tiles for non-game portion of screen
+export class Game {
+    /**@type {number|null} */
+    timer_tick = null;
+    FPSframes = 0;
+    FPStime = 0;
+    FPS = 0;
+    updateTimes = new util.MathArray([]);
+    drawTimes = new util.MathArray([]);
+    updateMean = 0;
+    updateMax = 0;
+    drawMean = 0;
+    drawMax = 0;  
+
+    fillScreen = false;
+    prefDimW = 44;
+    prefDimH =26;
+    dimW = this.prefDimW;
+    dimH = this.prefDimH;
+    uiWidth = 0; //width in tiles of non-game portion of screen
+    uiHeight = 2; //height in tiles for non-game portion of screen
+    gameOffsetX = 0;
+    gameOffsetY = 0;
+    startLevelTime = 60000;
+    level = 1;
+    maxHp = 3;
+
+    /**@type {players.Player[]} */
+    activePlayers = [];
+
+    /**@type {tilemap.TileMap|null} */
+    tiles = null; //tilemap for the level
+    /**@type {monster.Monster[]|null} */
+    monsters = null; //monsters in the level
+    /**@type {entity.Entity[]|null} */
+    items = null; //items in the level
+
+    multiplayerEnabled = true;
+    competitiveMode = false;
+    sandboxMode = false;
+    gameState = "loading";  
+    showFPS = false;
+    cullOffCamera = true;
+    cells = 0;
+    cellsCollected = 0;
+    startingHp = 3; 
+    numLevels = 30;      
+    shakeAmount = 0;       
+    shakeX = 0;                 
+    shakeY = 0;      
+    numReady = 0;
+
+    constructor() {
+
+        /**@type {number} */
+        this.initSounds();    
+        this.keyboard = new controllers.KeyboardController(this);
+        this.touch = new controllers.TouchController(this);
+        this.gamepadMgr = new controllers.GamepadManager(this);
+        this.camera = new camera.Camera();
         this.tileSize = this.getTileScale()*16;
 
         this.sprites = {
-            players: new SpriteSheet("sprites/players.png"),
-            monsters: new SpriteSheet("sprites/monsters.png"),
-            tiles: new SpriteSheet("sprites/tiles.png"),
-            entitiesItems: new SpriteSheet("sprites/entities_and_items.png"),
-            base: new SpriteSheet("sprites/WaveStrong.png", 32),
+            players: new sprites.SpriteSheet(this, "sprites/players.png"),
+            monsters: new sprites.SpriteSheet(this, "sprites/monsters.png"),
+            tiles: new sprites.SpriteSheet(this, "sprites/tiles.png"),
+            entitiesItems: new sprites.SpriteSheet(this, "sprites/entities_and_items.png"),
+            base: new sprites.SpriteSheet(this, "sprites/WaveStrong.png", 32),
         }
     
-        this.gameOffsetX = 0;
-        this.gameOffsetY = 0;
-    
-        this.startLevelTime = 60000;
-        this.level = 1;
-        this.maxHp = 3;
-    
-        this.activePlayers = [];
-        this.keyboard = new KeyboardController();
-        this.touch = new TouchController();
-        this.gamepadMgr = new GamepadManager();
-    
-        this.tiles = null; //tilemap for the level
-        this.monsters = null; //monsters in the level
-        this.items = null; //items in the level
-    
-        this.multiplayerEnabled = true;
-        this.competitiveMode = false;
-        this.sandboxMode = false;
-        this.gameState = "loading";  
-        this.showFPS = false;
-        this.cullOffCamera = true;
-
-        this.cells = 0;
-        this.cellsCollected = 0;
-
-        this.startingHp = 3; 
-        this.numLevels = 30;      
-    
-        this.shakeAmount = 0;       
-        this.shakeX = 0;                 
-        this.shakeY = 0;      
-    
-        this.initSounds();
-    
-        this.numReady = 0;
-
     }    
 
     start() {
@@ -76,9 +96,9 @@ class Game {
         this.sprites.tiles.sheet.onload = (() => that.ready());
         this.sprites.entitiesItems.sheet.onload = (() => that.ready());
     
-        this.mainMenu = new MainMenu();
-        this.optionsMenu = new OptionsMenu();
-        this.inGameMenu = new InGameMenu();
+        this.mainMenu = new menu.MainMenu(this);
+        this.optionsMenu = new menu.OptionsMenu(this);
+        this.inGameMenu = new menu.InGameMenu(this);
 
     }
 
@@ -95,21 +115,21 @@ class Game {
     update() {
         let updateStart = performance.now();
         this.gamepadMgr.update_gamepad_states();
-        for(let s of Object.keys(controlStates))
-            newControlStates[s] = oldControlStates[s]!=controlStates[s];
+        for(let s of Object.keys(controllers.controlStates))
+            controllers.newControlStates[s] = controllers.oldControlStates[s]!==controllers.controlStates[s];
         for(let p of this.activePlayers) {
             for(let s of Object.keys(p.controlStates))
-                p.newControlStates[s] = p.oldControlStates[s]!=p.controlStates[s];
+                p.newControlStates[s] = p.oldControlStates[s]!==p.controlStates[s];
         }
-        if(this.gameState=="dead" && !oldControlStates["jump"] && controlStates["jump"]) {
+        if(this.gameState=="dead" && !controllers.oldControlStates["jump"] && controllers.controlStates["jump"]) {
             this.gameState = "scores"
         }
         else if(this.gameState == "running" || this.gameState == "dead"){  
-            if(this.gameState=="running" && controlStates['menu'] && !oldControlStates['menu']) {
+            if(this.gameState=="running" && controllers.controlStates['menu'] && !controllers.oldControlStates['menu']) {
                 this.gameState = "paused";
             }
-            if(this.gameState=="running" && controlStates['jump'] && !oldControlStates['jump']) {
-                if(lastController.player==null)
+            if(this.gameState=="running" && controllers.controlStates['jump'] && !controllers.oldControlStates['jump']) {
+                if(controllers.lastController.player==null)
                 this.addPlayer();
             }
             let millis = 15;
@@ -120,26 +140,26 @@ class Game {
     
             this.timer_tick = n_timer_tick;
             for(let player of this.activePlayers)
-                player.update(millis);
+                player.update(game, millis);
             this.levelTime -= millis; //n_timer_tick - timer_tick; //use real elapsed time for the timer
     
             if(this.levelTime<0 && this.levelTime+millis>=0) {
                 let i=0;
-                for(let t of this.tiles.iterRect(new Rect([1,this.tiles.dimH-1,this.tiles.dimW-2,1]))) {
-                    this.items.push(new Boom(t, 1000+i*20));
+                for(let t of this.tiles.iterRect(new util.Rect([1,this.tiles.dimH-1,this.tiles.dimW-2,1]))) {
+                    this.items.push(new entityItems.Boom(t, 1000+i*20));
                     i+=1;
                 }
             }
     
             for(let i of this.items)
-                i.update(millis);
-            remove_dead(this.items)
+                i.update(this, millis);
+            this.remove_dead(this.items)
     
             for(let m of this.monsters)
-                m.update(millis);
-            remove_dead(this.monsters);
+                m.update(this, millis);
+            this.remove_dead(this.monsters);
     
-            remove_dropped(this.activePlayers);
+            this.remove_dropped(this.activePlayers);
             let all_dead = true;
             for (let player of this.activePlayers) {
                 if(!player.dead) {
@@ -152,9 +172,9 @@ class Game {
                 this.keyboard.player = null;
                 this.touch.player = null;
                 this.gamepadMgr.release_all_players();
-                addScore(this.score, false);
+                scores.addScore(this.score, false);
                 this.gameState = "dead";
-                this.items.push(new DelayedSound('gameOver', 1000));
+                this.items.push(new entityItems.DelayedSound('gameOver', 1000));
             }
 
             let level_clear = true;
@@ -168,7 +188,7 @@ class Game {
 //                this.playSound("newLevel"); 
                 if(this.level == this.numLevels){
                     if(!this.competitiveMode)
-                        addScore(this.score, true); 
+                        scores.addScore(this.score, true); 
                     this.gameState = "dead";
                     this.prefDimW = 22;
                     this.prefDimH = 13;
@@ -183,7 +203,7 @@ class Game {
             if(this.spawnCounter <= 0){  
                 this.spawnCounter = this.spawnRate;
                 if (this.monsters.length<50) {
-                    spawnMonster(null, true); //player.pos to stop spawning near the player
+                    map.spawnMonster(this, null, true); //player.pos to stop spawning near the player
                 }
             }    
             this.updateTimes.push(performance.now() - updateStart);
@@ -192,17 +212,17 @@ class Game {
             this.showTitle();
         } else if(this.gameState == "scores") {
             this.showTitle();
-            if(!oldControlStates["jump"] && controlStates["jump"]) {
+            if(!controllers.oldControlStates["jump"] && controllers.controlStates["jump"]) {
                 this.gameState = "title"
             }
         } else if(this.gameState == "paused") {
             this.showTitle();
-            if(this.gameState=="paused" && !oldControlStates["menu"] && controlStates["menu"]) {
+            if(this.gameState=="paused" && !controllers.oldControlStates["menu"] && controllers.controlStates["menu"]) {
                 this.gameState = "running";
             }
         }
 
-        oldControlStates = {... controlStates};
+        controllers.setOldControlStates(controllers.controlStates);
         for(let p of this.activePlayers) {
             p.oldControlStates = {... p.controlStates};
         }
@@ -215,8 +235,8 @@ class Game {
         if(this.gameState == "running" || this.gameState == "dead"){  
             this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
     
-            screenshake();
-            this.camera.update(millis);
+            this.screenshake();
+            this.camera.update(game, millis);
 
             let cx = 0; 
             let cy = 0;
@@ -230,32 +250,32 @@ class Game {
             }
             for(let i=cx;i<cr;i++){
                 for(let j=cy;j<cb;j++){
-                    this.tiles.at([i,j]).draw();
+                    this.tiles.at([i,j]).draw(game);
                 }
             }
 
             if(this.cullOffCamera) {
                 let cam = this.camera;
                 for(let m of this.monsters) {
-                    if(cam.collide(new Rect([m.pos.x,m.pos.y,1,1]))) m.draw();
+                    if(cam.collide(new util.Rect([m.pos.x,m.pos.y,1,1]))) m.draw(this);
                 }
                 for(let p of this.activePlayers) {
-                    if(cam.collide(new Rect([p.pos.x,p.pos.y,1,1]))) p.draw();
+                    if(cam.collide(new util.Rect([p.pos.x,p.pos.y,1,1]))) p.draw(this);
                 }
                 for(let i of this.items) {
-                    if(cam.collide(new Rect([i.pos.x,i.pos.y,1,1]))) i.draw();
+                    if(cam.collide(new util.Rect([i.pos.x,i.pos.y,1,1]))) i.draw(this);
                 }
             } else {
                 for(let i=0;i<this.monsters.length;i++){
-                    this.monsters[i].draw();
+                    this.monsters[i].draw(this);
                 }
         
                 for (let player of this.activePlayers) {
-                    player.draw();
+                    player.draw(this);
                 }
     
                 for(let i=0;i<this.items.length;i++){
-                    this.items[i].draw();
+                    this.items[i].draw(this);
                 }    
             }
 
@@ -266,24 +286,24 @@ class Game {
 
             this.shakeX = 0;
             this.shakeY = 0;
-            W = this.camera.scrollable?this.camera.viewPortW:this.dimW;
-            H = this.camera.scrollable?this.camera.viewPortH:this.dimH;
+            const W = this.camera.scrollable?this.camera.viewPortW:this.dimW;
+            const H = this.camera.scrollable?this.camera.viewPortH:this.dimH;
             //Draw time left
             let timerColor = (!this.competitiveMode || this.levelTime>this.startLevelTime-10000) ? "DarkSeaGreen" : "DarkOrange";
-            drawText("Lvl "+this.level+" Time "+Math.ceil(this.levelTime/1000)+" Scr "+this.score, this.tileSize*3/8, true, this.tileSize*3/4, timerColor);
+            this.drawText("Lvl "+this.level+" Time "+Math.ceil(this.levelTime/1000)+" Scr "+this.score, this.tileSize*3/8, true, this.tileSize*3/4, timerColor);
     
-            let hud_pos = [new Vec2([0,0]),new Vec2([W-6,0]),new Vec2([0,H-1]),new Vec2([W-6,H-1])];
+            let hud_pos = [new util.Vec2([0,0]),new util.Vec2([W-6,0]),new util.Vec2([0,H-1]),new util.Vec2([W-6,H-1])];
             let p = 0;
             for(let player of this.activePlayers) {
                 let hp = hud_pos[p];
-                player.drawHUD(hp);
+                player.drawHUD(game, hp);
                 let i = 0;
                 for(let item of player.inventory) {
-                    item.draw(hp.add([3+i+this.competitiveMode,0]), player);
+                    item.draw(game, hp.add([3+i+(this.competitiveMode?1:0),0]), player);
                     i++;
                 }
                 for(let item of player.passiveInventory) {
-                    item.draw(hp.add([3+i+this.competitiveMode,0]), player);
+                    item.draw(game, hp.add([3+i+(this.competitiveMode?1:0),0]), player);
                     i++;
                 }
                 p++;
@@ -298,13 +318,13 @@ class Game {
                     this.FPSframes = 0;
                     this.updateMean = Math.round(this.updateTimes.mean()*100)/100;
                     this.updateMax = Math.round(this.updateTimes.max()*100)/100;
-                    this.updateTimes = new MathArray([]);
+                    this.updateTimes = new util.MathArray([]);
                     this.drawMean = Math.round(this.drawTimes.mean()*100)/100;
                     this.drawMax = Math.round(this.drawTimes.max()*100)/100;
-                    this.drawTimes = new MathArray([]);
+                    this.drawTimes = new util.MathArray([]);
                 }
                 let cull = this.cullOffCamera? "CULL":"";
-                drawText("FPS: "+this.FPS+"  Update: "+this.updateMean+"ms (peak "+this.updateMax+")  Draw: "+this.drawMean+"ms (peak "+this.drawMax+") "+cull, this.tileSize*3/8, true, this.tileSize*(H-0.25)+this.gameOffsetY, "DarkSeaGreen");
+                this.drawText("FPS: "+this.FPS+"  Update: "+this.updateMean+"ms (peak "+this.updateMax+")  Draw: "+this.drawMean+"ms (peak "+this.drawMax+") "+cull, this.tileSize*3/8, true, this.tileSize*(H-0.25)+this.gameOffsetY, "DarkSeaGreen");
             }
         }
     }
@@ -376,8 +396,8 @@ class Game {
         this.tileSize = this.getTileScale()*16;
         this.fitMaptoTileSize(this.tileSize);
         this.setupCanvas();
-        this.mainMenu.updateWindowSize();
-        this.optionsMenu.updateWindowSize();
+        this.mainMenu.updateWindowSize(this);
+        this.optionsMenu.updateWindowSize(this);
     }
         
 
@@ -436,48 +456,52 @@ class Game {
         this.ctx.fillStyle = 'rgba(0,0,0,.75)';
         this.ctx.fillRect(0,0,this.canvas.width, this.canvas.height); 
     
-        drawText("Oarstrong", 2*this.tileSize, true, this.canvas.height/2 - 3.5*this.tileSize, "DarkSeaGreen");
-        drawText("by Evan Moore", this.tileSize, true, this.canvas.height/2 - 2*this.tileSize, "DarkOrange"); 
+        game.drawText("Oarstrong", 2*this.tileSize, true, this.canvas.height/2 - 3.5*this.tileSize, "DarkSeaGreen");
+        game.drawText("by Evan Moore", this.tileSize, true, this.canvas.height/2 - 2*this.tileSize, "DarkOrange"); 
     
         if(this.gameState == "title") {
-            this.mainMenu.update(0);
-            this.mainMenu.draw();
+            this.mainMenu.update(this, 0);
+            this.mainMenu.draw(this);
         } else
         if(this.gameState == "options") {
-            this.optionsMenu.update(0);
-            this.optionsMenu.draw();    
+            this.optionsMenu.update(this, 0);
+            this.optionsMenu.draw(this);    
         } else
         if(this.gameState == "paused") {
-            this.inGameMenu.update(0);
-            this.inGameMenu.draw();    
+            this.inGameMenu.update(this, 0);
+            this.inGameMenu.draw(this);    
         } else
         if(this.gameState == "scores")
-            drawScores(); 
+            scores.drawScores(); 
     }
     
     addPlayer() {
-        let player = new Player();
+        let player = new players.Player();
+        player.inventory.setPositions(this);
+        player.passiveInventory.setPositions(this);
         player.hp = this.startingHp;
         player.maxHp = this.startingHp;
         let startingItems;
         if(this.sandboxMode) {
-            startingItems = [new Wrench(), new Fist(), new PowerSaber(), new Grenade(), new Gun(), new Shotgun(), new Rifle(), new RocketLauncher(), new JetPack(), new Drone(), new GrappleGun()];
+            startingItems = [new inventory.Wrench(), new inventory.Fist(), new inventory.PowerSaber(), new inventory.Grenade(), 
+                new inventory.Gun(), new inventory.Shotgun(), new inventory.Rifle(), new inventory.RocketLauncher(), 
+                new inventory.JetPack(), new inventory.Drone(), new inventory.GrappleGun()];
             startingItems[0].count = 4;
             startingItems[3].count = 5;
-            for(let i of [new Shield(), new Glider()]) {
-                player.passiveInventory.add(i);
+            for(let i of [new inventory.Shield(), new inventory.Glider()]) {
+                player.passiveInventory.add(this, i);
             }
         } else {
-            startingItems = [new Fist()];
+            startingItems = [new inventory.Fist()];
             if(this.competitiveMode)
                 startingItems[0].hitDamage = 1;
         }
         for(let i of startingItems)
-            player.inventory.add(i);
+            player.inventory.add(this, i);
         player.inventory.select(player.inventory[0]);
         player.pos = this.tiles.startTile.pos;
-        player.controller = lastController;
-        lastController.attach_to_player(player);
+        player.controller = controllers.lastController;
+        controllers.lastController.attach_to_player(player);
         this.activePlayers.push(player);
     }
     
@@ -487,11 +511,11 @@ class Game {
         this.score = 0;
         this.cellsCollected = 2;
         this.activePlayers = []; 
-        let player = new Player();
+        let player = new players.Player();
         this.activePlayers.push(player);
         // single player attach all controllers to this player
         if(this.multiplayerEnabled) {
-            lastController.attach_to_player(player);
+            controllers.lastController.attach_to_player(player);
         } else {
             this.keyboard.attach_to_player(player);
             this.touch.attach_to_player(player);
@@ -501,20 +525,22 @@ class Game {
         player.maxHp = this.startingHp;
         let startingItems;
         if(this.sandboxMode) {
-            startingItems = [new Wrench(), new Fist(), new PowerSaber(), new Grenade(), new Gun(), new Shotgun(), new Rifle(), new RocketLauncher(), new JetPack(), new Drone(), new GrappleGun()];
+            startingItems = [new inventory.Wrench(), new inventory.Fist(), new inventory.PowerSaber(), new inventory.Grenade(), 
+                new inventory.Gun(), new inventory.Shotgun(), new inventory.Rifle(), new inventory.RocketLauncher(), 
+                new inventory.JetPack(), new inventory.Drone(), new inventory.GrappleGun()];
             startingItems[0].count = 4;
             startingItems[3].count = 5;
-            for(let i of [new Shield(), new Glider()]) {
-                player.passiveInventory.add(i);
+            for(let i of [new inventory.Shield(), new inventory.Glider()]) {
+                player.passiveInventory.add(this, i);
             }
         }
         else {
-            startingItems = [new Fist()];
+            startingItems = [new inventory.Fist()];
             if(this.competitiveMode)
                 startingItems[0].hitDamage = 1;
         }
         for(let i of startingItems) {
-            player.inventory.add(i);
+            player.inventory.add(this, i);
         }
         player.inventory.select(player.inventory[0]);
         this.startLevel();
@@ -530,13 +556,13 @@ class Game {
 
         let cc = this.competitiveMode? 1 : this.cellsCollected;
 
-        generateLevel();
+        map.generateLevel(game);
     
         for(let player of this.activePlayers) {
             player.pos = this.tiles.startTile.pos;
             player.escaped = false;
             if (player.dead) {
-                player.revive();
+                player.revive(this);
             }
     
             let addon = 1+Math.floor(this.level/10);
@@ -552,10 +578,140 @@ class Game {
                 inventory[3].fuel = Math.min(inventory[3].fuel,inventory[3].maxFuel);
             }
         }
-        let items = shuffle([FistPickup, PowerSaberPickup, GrenadePickup, GunPickup, RiflePickup, ShotgunPickup, RocketLauncherPickup, JetPackPickup, WrenchPickup, GrappleGunPickup, DronePickup, ShieldPickup, GliderPickup]).slice(0,cc)
-        items.push(HealthPickup);
-        this.tiles.kioskTile.setItems(items);
-        this.levelupItems = [UpgradePickup, BootsPickup];
-    }    
+        let items = util.shuffle([kioskitems.FistPickup, kioskitems.PowerSaberPickup, kioskitems.GrenadePickup, kioskitems.GunPickup, 
+            kioskitems.RiflePickup, kioskitems.ShotgunPickup, kioskitems.RocketLauncherPickup, kioskitems.JetPackPickup, 
+            kioskitems.WrenchPickup, kioskitems.GrappleGunPickup, kioskitems.DronePickup, kioskitems.ShieldPickup, kioskitems.GliderPickup]).slice(0,cc)
+        items.push(kioskitems.HealthPickup);
+        const kiosk = this.tiles.kioskTile
+        if(kiosk instanceof tile.KioskDispenser) kiosk.setItems(items);
+    }        
+    
+    screenshake(){
+        if(this.shakeAmount){
+            this.shakeAmount--;
+        }
+        let shakeAngle = Math.random()*Math.PI*2;
+        this.shakeX = Math.round(Math.cos(shakeAngle)*this.shakeAmount);
+        this.shakeY = Math.round(Math.sin(shakeAngle)*this.shakeAmount);
+    }
+    
+    drawText(text, size, centered, textY, color) {
+        this.ctx.fillStyle = color;
+        this.ctx.font = size + "px monospace";
+        let textX;
+        if(centered){
+            textX = (this.canvas.width-this.ctx.measureText(text).width)/2;
+        }else{
+            textX = this.canvas.width-this.uiWidth*(this.tileSize-1);
+        }
+    
+        this.ctx.fillText(text, textX, textY);
+    }
+    
+    drawTileText(text, text_size, pos, color){
+        this.ctx.fillStyle = color;
+        this.ctx.font = text_size + "px monospace";
+        let textY = (pos.y + 1 - (1-text_size/this.tileSize)/2)*this.tileSize + this.gameOffsetY + this.shakeY;
+        let textX = (pos.x + (1-this.ctx.measureText(text).width/this.tileSize)/2)*this.tileSize + this.gameOffsetX + this.shakeX;
+        this.ctx.fillText(text, textX, textY);
+    }
+    
+    /**
+     * 
+     * @param {util.Vec2} pos 
+     * @returns {[players.Player|null, number]}
+     */
+    nearestPlayer(pos) {
+        let bestd = 1e9;
+        /**@type {players.Player|null} */
+        let bestp = null;
+        for(let p of this.activePlayers) {
+            if(!p.dead) {
+                let d = p.pos.dist(pos);
+                bestp = d<bestd?p:bestp;
+                bestd = d<bestd?d:bestd;
+            }
+        }
+        return [bestp, bestd];
+    }
+    /**
+     * 
+     * @param {boolean} forcePlayers 
+     * @param {monster.Monster|null} exclude 
+     * @returns 
+     */
+    monsters_and_players(forcePlayers=true, exclude = null) {
+        if(!forcePlayers && (!this.competitiveMode || this.levelTime>this.startLevelTime-10000)) {
+            return this.monsters.filter(m => m!==exclude);
+        }
+        return this.monsters.concat(this.activePlayers).filter(m => m!==exclude);
+    }
+    
+    /**
+     * 
+     * @param {players.Player} player 
+     * @returns 
+     */    
+    monsters_with_other_players(player) {
+        if(!this.competitiveMode || this.levelTime>this.startLevelTime-10000)
+            return this.monsters;
+        let i = this.activePlayers.indexOf(player);
+        let pl = this.activePlayers.slice(0,i).concat(this.activePlayers.slice(i+1));
+        let all = this.monsters.concat(pl);
+        return all;
+    }
+    
+    /**
+     * 
+     * @param {players.Player} player 
+     * @returns 
+     */    
+    other_players(player) {
+        let i = this.activePlayers.indexOf(player);
+        return this.activePlayers.slice(0,i).concat(this.activePlayers.slice(i+1));
+    }
+    
+    /**
+     * 
+     * @param {entity.Entity[]} items 
+     * @param {entity.Entity} item 
+     * @returns 
+     */
+    remove(items, item) {
+        for(let i=0;i<items.length;i++) 
+            if (items[i]==item){
+                items.splice(i,1);
+                return;
+            }
+    }
+    
+    /**
+     * 
+     * @param {entity.Entity[]} items 
+     * @returns 
+     */
+    remove_dead(items) {
+        for(let k=items.length-1;k>=0;k--)
+            if(items[k].dead)
+                items.splice(k,1);
+    }
+
+    /**
+     * 
+     * @param {players.Player[]} players 
+     */
+    remove_dropped(players) {
+        for(let k=players.length-1;k>=0;k--)
+            if(players[k].dropFromGame) {
+                players[k].controller.attach_to_player();
+                this.items.push(new entityItems.DeadPlayer(players[k]));
+                players.splice(k,1);
+            }
+    }
+    
+
 }
 
+
+var game = new Game();
+game.start();

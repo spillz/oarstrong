@@ -1,7 +1,13 @@
-class Camera extends Rect {
+//@ts-check
+import { Vec2, Rect } from "./util";
+import { Player } from "./player";
+
+export class Camera extends Rect {
     constructor() {
         super([0, 0, 14, 8]);
+        /**@type {boolean} */
         this.scrollable = true;
+        /**@type {Player|null} */
         this.focusPlayer = null;
     }
     get viewPortH() {
@@ -28,7 +34,11 @@ class Camera extends Rect {
             this.y = null;
         }
     }
-    update(millis) {
+    /**
+     * 
+     * @param {number} millis 
+     */
+    update(game, millis) {
         if(this.scrollable) {
             let numPlayers = 0;
             let posx = 0;
@@ -43,7 +53,7 @@ class Camera extends Rect {
                     numPlayers++;
                 }
             }
-            if(this.focusPlayer==null) {
+            if(this.focusPlayer===null) {
                 this.focusPlayer = game.activePlayers[0]; //TODO: If all players drop, potentially this is an empty list
             }
             if(numPlayers>0) {
@@ -63,7 +73,7 @@ class Camera extends Rect {
             sx = Math.max(Math.min(sx,0),-game.dimW+this.viewPortW);
             sy = Math.max(Math.min(sy,0),-game.dimH+this.viewPortH);
             if(this.x==null || this.y==null) {
-                this.pos = [sx, sy];
+                this.pos = new Vec2([sx, sy]);
             } 
             else {
                 let dx = sx - this.pos.x;

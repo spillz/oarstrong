@@ -1,50 +1,85 @@
-class SpriteSheet {
-    constructor(src_file, spriteSize=16) {
+//@ts-check
+/**@typedef {import('./game').Game} Game */
+
+export class SpriteSheet {
+    /**
+     * 
+     * @param {Game} game
+     * @param {string} src_file 
+     * @param {number} spriteSize 
+     */
+    constructor(game, src_file, spriteSize=16) {
         this.spriteSize = spriteSize;
         this.sheet = new Image();
         this.sheet.src = src_file;
+        this.game = game;
     }
+    /**
+     * 
+     * @param {[number, number]} spriteLoc 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {boolean} flipx 
+     */
     draw(spriteLoc, x, y, flipx=false){
-        let flipped = 1 - 2*flipx;
+        let flipped = flipx? -1 : 1;
         if(flipx) {
-            game.ctx.scale(-1,1);
+            this.game.ctx.scale(-1,1);
         }
-        game.ctx.drawImage(
+        this.game.ctx.drawImage(
             this.sheet,
             spriteLoc[0]*this.spriteSize,
             spriteLoc[1]*this.spriteSize,
             this.spriteSize,
             this.spriteSize,
-            flipped*(x*game.tileSize + game.shakeX + game.gameOffsetX),
-            y*game.tileSize  + game.shakeY + game.gameOffsetY,
-            flipped*game.tileSize,
-            game.tileSize
+            flipped*(x*this.game.tileSize + this.game.shakeX + this.game.gameOffsetX),
+            y*this.game.tileSize  + this.game.shakeY + this.game.gameOffsetY,
+            flipped*this.game.tileSize,
+            this.game.tileSize
         );
         if(flipx) {
-            game.ctx.scale(-1,1);
+            this.game.ctx.scale(-1,1);
         }
     }
+    /**
+     * 
+     * @param {[number, number]} spriteLoc 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} scale
+     * @param {boolean} flipx 
+     */
     drawScaled(spriteLoc, x, y, scale, flipx=false){
-        let flipped = 1 - 2*flipx;
+        let flipped = flipx? -1 : 1;
         if(flipx) {
-            game.ctx.scale(-1,1);
+            this.game.ctx.scale(-1,1);
         }
-        game.ctx.drawImage(
+        this.game.ctx.drawImage(
             this.sheet,
             spriteLoc[0]*this.spriteSize,
             spriteLoc[1]*this.spriteSize,
             this.spriteSize,
             this.spriteSize,
-            flipped*(x*game.tileSize + game.shakeX + game.gameOffsetX),
-            y*game.tileSize  + game.shakeY + game.gameOffsetY,
-            flipped*game.tileSize*scale,
-            game.tileSize*scale
+            flipped*(x*this.game.tileSize + this.game.shakeX + this.game.gameOffsetX),
+            y*this.game.tileSize  + this.game.shakeY + this.game.gameOffsetY,
+            flipped*this.game.tileSize*scale,
+            this.game.tileSize*scale
         );
         if(flipx) {
-            game.ctx.scale(-1,1);
+            this.game.ctx.scale(-1,1);
         }
     }
+    /**
+     * 
+     * @param {[number, number]} spriteLoc 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} angle
+     * @param {boolean} flipx 
+     * @param {'center'|[number, number]} anchor
+     */
     drawRotated(spriteLoc, x, y, angle, flipx=false, anchor='center'){
+        const game = this.game;
         game.ctx.save();
 //        let flipped = 1 - 2*flipx;
         if(anchor == 'center') {
@@ -72,7 +107,17 @@ class SpriteSheet {
         );
         game.ctx.restore();
     }
+    /**
+     * 
+     * @param {[number, number, number, number]} spriteLoc 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} angle
+     * @param {boolean} flipx 
+     * @param {'center'|[number, number]} anchor
+     */
     drawRotatedMultitile(spriteLoc, x, y, angle, flipx=false, anchor='center'){ //same as drawRotated but spriteloc is 4-item array referencing the sprite location: [x,y,w,h]
+        const game = this.game;
         game.ctx.save();
         let tw = spriteLoc[2];
         let th = spriteLoc[3];
@@ -104,7 +149,7 @@ class SpriteSheet {
     }
 }
 
-const monsterRowLocIds = {
+export const monsterRowLocIds = {
     OneEye: 0,
     TwoEye: 1,
     Tank: 2,
@@ -112,7 +157,8 @@ const monsterRowLocIds = {
     Jester: 4,
 }
 
-const baseSetIds = {
+/**@type {{[id:string]:[number,number]}} */
+export const baseSetIds = {
     BeachUpper: [4,1],
     BeachLower: [9,1],
     Water: [10,1],
@@ -128,10 +174,15 @@ const baseSetIds = {
     PlayerCharacter3: [12,6],
     PlayerCharacter4: [13,6],
     Slash: [10,7],
+}
+
+/**@type {{[id:string]:[number,number,number,number]}} */
+export const bigSetIds = {
     Boss1: [0,3,3,3],
 }
 
-const tileIds = {
+/**@type {{[id:string]:[number,number]}} */
+export const tileIds = {
     KioskScreen: [0,0],
     KioskDispenser: [0,1],
     Floor: [1,0],
@@ -203,7 +254,8 @@ const tileIds = {
 
 }
 
-const entityItemIds = {
+/**@type {{[id:string]:[number,number]|[number,number,number,number]}} */
+export const entityItemIds = {
     Chips: [0,0],
     Energy: [1,0],
     Key: [2,0],

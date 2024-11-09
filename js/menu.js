@@ -1,4 +1,10 @@
-class Menu {
+//@ts-check
+
+import { Rect } from "./util";
+import * as controllers from "./controllers";
+/**@typedef {import('./game').Game} Game */
+
+export class Menu {
     constructor(options, dim, callback) {
         this.options = options;
         this.dim = new Rect(dim);
@@ -6,7 +12,11 @@ class Menu {
         this.callback = callback;
         this.color = "DarkSeaGreen"
     }
-    draw() {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    draw(game) {
         let row_size = Math.ceil(this.dim.h/this.options.length)
         let text_size = Math.ceil(this.dim.h/this.options.length/2)
         let y = this.dim.y;
@@ -14,12 +24,22 @@ class Menu {
         let i = 0;
         for(let o of this.options) {
             let opt = i==this.activeOption? ">"+o+"<":o;
-            this.drawMenuText(opt, text_size, true, center_x, y, this.color);
+            this.drawMenuText(game, opt, text_size, true, center_x, y, this.color);
             i+=1;
             y+=row_size;
         }
     }
-    drawMenuText(text, size, centered, textX, textY, color) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {string} text 
+     * @param {number} size 
+     * @param {boolean} centered 
+     * @param {number} textX 
+     * @param {number} textY 
+     * @param {string} color 
+     */
+    drawMenuText(game, text, size, centered, textX, textY, color) {
         game.ctx.fillStyle = color;
         game.ctx.font = size + "px monospace";
         if(centered){
@@ -27,37 +47,57 @@ class Menu {
         }
         game.ctx.fillText(text, textX, textY);        
     }
-    update(millis) {
-        if(controlStates['up'] && !oldControlStates['up']) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     */
+    update(game, millis) {
+        if(controllers.controlStates['up'] && !controllers.oldControlStates['up']) {
             this.activeOption = this.activeOption>0? this.activeOption-1 : this.options.length-1;
             this.callback(this,'change');
         }
-        if(controlStates['down'] && !oldControlStates['down']) {
+        if(controllers.controlStates['down'] && !controllers.oldControlStates['down']) {
             this.activeOption = this.activeOption<this.options.length-1? this.activeOption+1 : 0;
             this.callback(this,'change');
         }
-        if(controlStates['use'] && !oldControlStates['use'] || controlStates['jump'] && !oldControlStates['jump'])
+        if(controllers.controlStates['use'] && !controllers.oldControlStates['use'] || 
+            controllers.controlStates['jump'] && !controllers.oldControlStates['jump'])
             this.callback(this,'select');
     }
 }
 
-class MainMenu extends Menu {
-    constructor() {
+export class MainMenu extends Menu {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    constructor(game) {
         let dim = new Rect([0, game.canvas.height/2, game.canvas.width, 4*game.tileSize])
-        super(['Play Game', 'High Scores', 'Options'], dim, (menu, action) => this.handler(menu, action));
+        super(['Play Game', 'High Scores', 'Options'], dim, (menu, action) => this.handler(game, menu, action));
     }
-    updateWindowSize() {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    updateWindowSize(game) {
         this.dim = new Rect([0, game.canvas.height/2, game.canvas.width, 4*game.tileSize]);
     }
-    handler(menu, action) {
-        if(action =='select') {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Menu} menu 
+     * @param {string} action 
+     */
+    handler(game, menu, action) {
+        if(action === 'select') {
             switch(menu.activeOption) {
                 case 0:
-                    if(controlStates["left"]) {
+                    if(controllers.controlStates["left"]) {
                         game.prefDimW = 80;
                         game.prefDimH = 40; 
                         game.startLevelTime = 360000;
-                    } else if(controlStates["right"]) {
+                    } else if(controllers.controlStates["right"]) {
                         game.prefDimW = 22;
                         game.prefDimH = 13; 
                         game.startLevelTime = 120000;
@@ -82,15 +122,28 @@ class MainMenu extends Menu {
 }
 
 
-class OptionsMenu extends Menu {
-    constructor() {
+export class OptionsMenu extends Menu {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    constructor(game) {
         let dim = new Rect([0, game.canvas.height/2, game.canvas.width, 0])
-        super([], dim, (menu, action) => this.handler(menu, action));
+        super([], dim, (menu, action) => this.handler(game, menu, action));
     }
-    updateWindowSize() {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    updateWindowSize(game) {
         this.dim = new Rect([0, game.canvas.height/2, game.canvas.width, this.options.length*game.tileSize]);
     }
-    update(millis) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     */
+    update(game, millis) {
         this.options = [
                 'Pixel perfect scaling: '+(game.fillScreen?'OFF':'ON'),
                 'Show framerate: '+(game.showFPS?'ON':'OFF'),
@@ -101,9 +154,15 @@ class OptionsMenu extends Menu {
                 'Back'
             ];
         this.dim = new Rect([0, game.canvas.height/2, game.canvas.width, this.options.length*game.tileSize])
-        super.update(millis);
+        super.update(game, millis);
     }
-    handler(menu, action) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Menu} menu 
+     * @param {string} action 
+     */
+    handler(game, menu, action) {
         if(action == 'select') {
             switch(menu.activeOption) {
                 case 0:
@@ -129,16 +188,29 @@ class OptionsMenu extends Menu {
     }    
 }
 
-class InGameMenu extends Menu {
-    constructor() {
+export class InGameMenu extends Menu {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    constructor(game) {
         let dim = new Rect([0, game.canvas.height/2, game.canvas.width, 3*game.tileSize])
-        super(['Continue', 'Drop Player', 'Exit to Main Menu'], dim, (menu, action) => this.handler(menu, action));
+        super(['Continue', 'Drop Player', 'Exit to Main Menu'], dim, (menu, action) => this.handler(game, menu, action));
     }
-    updateWindowSize() {
+    /**
+     * 
+     * @param {Game} game 
+     */
+    updateWindowSize(game) {
         this.dim = new Rect([0, game.canvas.height/2, game.canvas.width, this.options.length*game.tileSize]);
     }
-
-    handler(menu, action) {
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Menu} menu 
+     * @param {string} action 
+     */
+    handler(game, menu, action) {
         if(action == 'select') {
             switch(menu.activeOption) {
                 case 0:
