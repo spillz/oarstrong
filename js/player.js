@@ -174,7 +174,7 @@ const STATE_STUN  = 1;
 const STATE_DASH  = 2;
 const STATE_DODGE = 3;
 const STATE_STAND = 4;
-const STATE_DEAD  = 5
+const STATE_DEAD  = 5;
 
 
 export class Player extends Monster {
@@ -239,15 +239,21 @@ export class Player extends Monster {
         this.newControlStates = {...initializeControlStates()};
         /**@type {ReturnType<initializeControlStates>} */
         this.oldControlStates = {...initializeControlStates()};
-    
+        
+        
+        this.sprite = /**@type {[number, number]} */([0,0]);
+        this.setWalkFrames();
         // this.cycleSprite();
     }
     setWalkFrames() {
         //Animation data
-        this.walkFrames = [new Vec2([2,this.sprite]), new Vec2([3,this.sprite]), 
-            new Vec2([4,this.sprite]), new Vec2([3,this.sprite]), 
-            new Vec2([2,this.sprite]), new Vec2([5,this.sprite]), 
-            new Vec2([6,this.sprite]), new Vec2([5,this.sprite])];
+        const y = this.sprite[1]
+        this.walkFrames = [
+            new Vec2([2,y]), new Vec2([3,y]), 
+            new Vec2([4,y]), new Vec2([3,y]), 
+            new Vec2([2,y]), new Vec2([5,y]), 
+            new Vec2([6,y]), new Vec2([5,y])
+        ];
     }
     /**
      * 
@@ -302,17 +308,77 @@ export class Player extends Monster {
     updateState(game, millis) {
         switch(this.activeState) {
             case STATE_STAND:
-                break;
             case STATE_WALK:
+                    //this.runCheck(millis);
+                    this.entityInteract(game);
+                    if(this.stunTimer.finished()) {
+                        this.walkCheck(game, millis, this.running);
+                        this.cycleInventoryCheck(game, millis);
+                    }
+                    if(!this.aiming) {
+                        this.tileInteract(game, millis)
+                        if(this.activeState!=STATE_WALK)
+                            return;
+                    }
+                    this.jumpCheck(game);
+                
+                    if (this.fallCheck()) this.setState(game, STATE_STUN);
                 break;
             case STATE_STUN:
+                if(this.stunTimer.finished()) {
+                    this.entityInteract(game);
+
+                    if(this.stunTimer.finished()) {
+                        this.walkCheck(game, millis, false);
+                        this.cycleInventoryCheck(game, millis);
+                    }
+                        
+                    // // jump
+                    // if(this.fromJump && this.stateTimer.elapsed<100) {
+                    //     this.jumpCheck(millis);
+                    // }
+
+                    // Tile interactions pressing up/down
+                    this.tileInteract(game, millis);
+
+                }
+
+                if(!this.jumpTimer.finished() && this.vel.y<0 && !this.controlStates['jump']) { //Kill the jump for early release
+                    this.vel.y *= 0.5 ** (millis/15);
+                }
+
+                // check we are still falling
+                if(!this.fallCheck()) {
+                //Vibrate -- hard coding velocity threshold
+                    if(Math.abs(this.vel.y)>0.01 && this.vel.y==0) {
+                        this.controller.vibrate(20*Math.abs(this.vel.y),20*Math.abs(this.vel.y),50);
+                    }
+                    this.vel.y = 0;
+                    this.setState(game, STATE_WALK);
+                    return;
+                } 
+                if(this.vel.y>=0) { //check if falling onto a ledge
+                    for(let tbelow of game.tiles.contacters(this.bounds())) {
+                        if(tbelow.standable && game.tiles.above(tbelow).tile.passable && !game.tiles.above(tbelow).tile.climbable) {
+                            let ycut = this.bounds().bottom
+                            if(ycut>tbelow.y && ycut - this.vel.y*millis<=tbelow.y) {
+                                this.pos.y -= ycut - tbelow.y;
+                                this.vel.y = 0;
+                                this.setState(game, STATE_WALK);
+                                return;
+                            }
+                        }
+                    }
+                }
+                // gravity
+                this.vel.y = Math.min(this.maxFallSpeed, this.vel.y + 1.0/4800*millis/15);
                 break;
             case STATE_DASH:
                 break;
             case STATE_DODGE:
                 break;
             case STATE_DEAD:
-            break;
+                break;
         }
     }
 
@@ -362,18 +428,18 @@ export class Player extends Monster {
             this.currentFrame = 0;
             this.lastFramePos = this.pos.x;
         }
-        else if(this.activeState==STATE_STUN) {
+        else if(this.activeState===STATE_STUN) {
             sprite = [4, this.sprite[1]];
             this.currentFrame = 0;
             this.lastFramePos = this.pos.x;
         }
-        else if(this.vel.x==0) {
+        else if(this.vel.x===0) {
             sprite = [0, this.sprite[1]];
             this.currentFrame = 0;
             this.lastFramePos = this.pos.x;
         }
         else {
-            if(this.facing!=this.lastFacing) {
+            if(this.facing!==this.lastFacing) {
                 this.currentFrame = 0;
                 this.lastFramePos = this.pos.x;
             } else if(this.facing*(this.pos.x-this.lastFramePos)*8>=1) {
@@ -456,6 +522,12 @@ export class Player extends Monster {
 
     }
 
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     * @param {boolean} running 
+     */
     walkCheck(game, millis, running) {
         // left
         if(this.controlStates['left']) {
@@ -497,6 +569,11 @@ export class Player extends Monster {
         }
     }
 
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     */
     cycleInventoryCheck(game, millis) {
         //cycle inventory
         if(this.controlStates["cycle"] && !this.oldControlStates["cycle"]) {
@@ -527,6 +604,10 @@ export class Player extends Monster {
         else this.running = true;
     }
 
+    /**
+     * 
+     * @param {Game} game 
+     */
     jumpCheck(game) {
         // jump
         if(!this.oldControlStates['jump'] && this.controlStates['jump']){
@@ -536,7 +617,10 @@ export class Player extends Monster {
             return;
         }
     }
-
+    /**
+     * 
+     * @param {Game} game 
+     */
     entityInteract(game) {
         for(let k=0;k<game.items.length;k++) {
             if(this.bounds().collide(game.items[k].bounds())) {
@@ -554,21 +638,26 @@ export class Player extends Monster {
 
     }
 
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     */
     tileInteract(game, millis) {
         if(this.controlStates['up']) {
             let t=game.tiles.closestTile(this.bounds());
             if(!(t instanceof Void)) {
-                t.entityInteract(this,'up');
+                t.entityInteract(game, this, 'up');
             }
         }
         if(this.controlStates['down']) {
             let t=game.tiles.closestTile(this.bounds());
             if(!(t instanceof Void)) {
-                t.entityInteract(this,'down');
+                t.entityInteract(game, this, 'down');
                 let tdown = game.tiles.below(t);
-                if(!(tdown instanceof Void) && tdown.y==this.bounds().bottom) //can interact with things below you that you are standing on like ladders
+                if(!(tdown instanceof Void) && tdown.tile.y==this.bounds().bottom) //can interact with things below you that you are standing on like ladders
                 {
-                    tdown.entityInteract(this,'down');
+                    tdown.tile.entityInteract(game, this, 'down');
                 }
             }
             let adj = 0 //fall if standing on a standable and pressed down
@@ -577,7 +666,7 @@ export class Player extends Monster {
                     if(tbelow.standable && tbelow.passable) {
                         //If the tile is standable but passable we'll allow the play to nudge down
                         adj = 1;
-                    } else if(!tbelow.passable && this.bounds().bottom==tbelow.y && game.tiles.above(tbelow).passable){
+                    } else if(!tbelow.passable && this.bounds().bottom==tbelow.y && game.tiles.above(tbelow).tile.passable){
                         //Standing on a tile that's not passable and the tile above it is passable means we shouldn't fall through  
                         //so we won't nudge and break immediately.
                         adj = 0;
