@@ -1,9 +1,11 @@
+//@ts-check
+
 import { Vec2, Rect } from './util';
 import { entityItemIds } from './sprites';
 import { Exit, Floor, Kiosk, Tile, Void, Wall } from './tile';
 import { Entity } from './entity';
 import { Player } from './player';
-
+/**@typedef {import('./game').Game} Game */
 
 export class Treasure extends Entity {
     constructor(tile) {
@@ -202,21 +204,21 @@ export class MonsterBoom extends Entity {
                 return
             }
             let t = game.tiles.closestTile(this.monster.bounds());
-            let t0 = game.tiles.leftOf(t);
-            let t1 = game.tiles.rightOf(t);
+            let t0 = game.tiles.leftOf(t.pos);
+            let t1 = game.tiles.rightOf(t.pos);
             if (!(t instanceof Wall))
                 game.items.push(new Boom(t));
             if (!(t0 instanceof Wall))
                 game.items.push(new Boom(t0));
             if (!(t1 instanceof Wall))
                 game.items.push(new Boom(t1));
-            let bigRect = new Rect([t0.x, t0.y, 3, 1]);
+            let bigRect = new Rect([t0.pos.x, t0.pos.y, 3, 1]);
             for (let m of game.monsters)
                 if (m.hitBounds().collide(bigRect))
-                    m.hit(game, this.damage);
+                    m.hitFrom(game, this.pos, this.damage);
             for (let player of game.activePlayers)
                 if (player.hitBounds().collide(bigRect))
-                    player.hit(game, this.damage);
+                    player.hitFrom(game, this.pos, this.damage);
             this.dead = true;
             game.playSound('boom');
             //TODO: base intensity on distance from EACH player
@@ -241,7 +243,7 @@ export class Boom extends Entity {
         this.elapsed += millis;
         if (this.elapsed >= this.timer) {
             this.dead = true;
-            let t = game.tiles.at(this.pos);
+            let t = game.tiles.get(this.pos);
             if (!(t instanceof Floor || t instanceof Kiosk || t instanceof Exit))
                 t.replace(Floor);
         }
@@ -294,7 +296,7 @@ export class Shot extends Entity {
             // }
             for (let m of monsters) {
                 if (!m.dead && this.bounds().collide(m.hitBounds())) {
-                    m.hit(game, this.shotDamage);
+                    m.hitFrom(game, this.pos, this.shotDamage);
                     this.dead = true;
                     break;
                 }
@@ -358,14 +360,14 @@ export class LiveGrenade extends Entity {
                 this.dead = true;
                 return;
             }
-            for (let t of game.tiles.iterRange(t0, this.radius)) {
+            for (let t of game.tiles.iterRange(t0.pos, this.radius)) {
                 game.items.push(new Boom(t));
             }
             for (let p of game.monsters_and_players()) {
                 let d = t0.dist(p.pos); //TODO: This doesn't necessarily align center of player with center of rocket (ideally update pos for grenade/rocket bounds to save on expensive calcs)
                 if (d <= this.radius) {
                     d = Math.max(0.1, d);
-                    p.hit(game, this.damage * (1 + (d <= 0.5 ? 1 : 0)));
+                    p.hitFrom(game, this.pos, this.damage * (1 + (d <= 0.5 ? 1 : 0)));
                     p.stun(500 * this.damage);
                     let dx = p.pos.x - t0.x;
                     let dy = p.pos.y - (t0.y + 1);
@@ -439,7 +441,7 @@ export class ShotFrags extends Entity {
             for (let m of monsters) {
                 for (let b of this.boundingBoxes) {
                     if (!m.dead && this.bounds(this.pos, b).collide(m.hitBounds())) {
-                        m.hit(game, this.shotDamage);
+                        m.hitFrom(game, this.pos, this.shotDamage);
                         break;
                     }
                 }
@@ -518,14 +520,14 @@ export class LiveRocket extends Entity {
                         p.controller.vibrate(1.0, 1.0, 350);
                     }
                 }
-                for (let t of game.tiles.iterRange(t0, this.radius)) {
+                for (let t of game.tiles.iterRange(t0.pos, this.radius)) {
                     game.items.push(new Boom(t));
                 }
                 for (let p of game.monsters_and_players()) {
                     let d = this.pos.dist(p.pos);
                     if (d <= this.radius) {
                         d = Math.max(0.1, d);
-                        p.hit(game, this.damage * (1 + (d <= 0.5 ? 1 : 0)));
+                        p.hitFrom(game, this.pos, this.damage * (1 + (d <= 0.5 ? 1 : 0)));
                         p.stun(500 * this.damage);
                         let dx = p.pos.x - this.pos.x;
                         let dy = p.pos.y - (this.pos.y + 1);
@@ -625,12 +627,12 @@ export class LiveDrone extends Entity {
         // explodes on collision with a blast radius
         if (collision) {
             let t0 = game.tiles.closestTile(this.bounds());
-            for (let t of game.tiles.iterRange(t0, this.radius)) {
+            for (let t of game.tiles.iterRange(t0.pos, this.radius)) {
                 game.items.push(new Boom(t));
             }
             for (let m of game.monsters_with_other_players(player)) {
                 if (t0.dist(m.pos) <= this.radius) {
-                    m.hit(game, this.damage);
+                    m.hitFrom(game, this.pos, this.damage);
                 }
             }
             player.controller.vibrate(0.2, 0.2, 100);
@@ -745,7 +747,7 @@ export class TrapBlade extends Entity {
         }
         for (let pl of game.monsters_and_players()) {
             if (this.bounds().collide(pl.bounds())) {
-                pl.hit(plat.damage, 1);
+                pl.hitFrom(game, this.pos, plat.damage, 1);
                 if (!pl.isPlayer) {
                     pl.stun(500);
                 }

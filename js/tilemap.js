@@ -1,5 +1,6 @@
 //@ts-check
 
+import { Entity } from "./entity.js";
 import { Monster } from "./monster.js";
 import { Tile, Void } from "./tile.js";
 import { Rect, shuffle, Vec2 } from "./util";
@@ -125,6 +126,16 @@ export class TileMap {
         if (this.isValidPos(vec))
             return this.array[vec[0]][vec[1]];
         return new Void(vec);
+    }
+    /**
+     * 
+     * @param {VecLike} vec 
+     * @returns 
+     */
+    get(vec) {
+        const v = new Vec2(vec)
+        const t = this.at(v);
+        return new TileStepper(this, t, v);
     }
     /**
      * 
@@ -338,7 +349,7 @@ export class TileMap {
     }
     /**
      * 
-     * @param {Monster} monster 
+     * @param {Entity} monster 
      * @param {number} millis 
      * @param {Vec2} vel 
      */

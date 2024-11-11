@@ -2,14 +2,18 @@
 
 import { randomRange, Rect, Timer, Vec2 } from "./util";
 import { baseSetIds, monsterRowLocIds } from "./sprites";
-import { Void, Wall } from "./tile";
+import { Tile, Void, Wall } from "./tile";
 import { Entity } from "./entity";
 import { Boom, Chips } from "./entity_items";
-//import { Player } from "./player";
-///**@typedef {import('./player').Player} Player */
 /**@typedef {import('./game').Game} Game */
 
 export class Monster extends Entity {
+    /**
+     * 
+     * @param {Tile} tile 
+     * @param {[number,number]|[number,number,number,number]} sprite 
+     * @param {number} hp 
+     */
     constructor(tile, sprite, hp = 1) {
         super(tile, sprite);
         /**@type {number}*/
@@ -322,7 +326,7 @@ export class Monster extends Entity {
 
 export class Jelly extends Monster {
     constructor(tile) {
-        super(tile, monsterRowLocIds.OneEye, 1);
+        super(tile, [0,monsterRowLocIds.OneEye], 1);
         this.hp = 1;
         this.topSpeed = 0.5 * this.topSpeed;
         this.fallOrigin = null;

@@ -69,7 +69,7 @@ export class Player extends Monster {
     controller = null;
 
     constructor(playerId = -1, tile = null) {
-        super(tile, playerId, 3);
+        super(tile, [0,playerId], 3);
         /**@type {ActiveInventory} */
         this.inventory = new ActiveInventory(this);
         /**@type {Inventory} */
