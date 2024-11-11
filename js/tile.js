@@ -17,8 +17,8 @@ export class Tile extends Rect {
      * @param {boolean} passable 
      * @param {boolean} climbable 
      */
-    constructor(x, y, sprite=null, passable=true, climbable=false){
-        super([x,y,1,1])
+    constructor(x, y, sprite = null, passable = true, climbable = false) {
+        super([x, y, 1, 1])
         /**@type {[number,number]} */
         this.sprite = sprite;
         /**@type {boolean} */
@@ -26,7 +26,7 @@ export class Tile extends Rect {
         /**@type {boolean} */
         this.climbable = climbable;
         /**@type {number} */
-        this.climbSpeed = 1.0/300;
+        this.climbSpeed = 1.0 / 300;
         /**@type {number} */
         this.hp = 100;
     }
@@ -40,16 +40,16 @@ export class Tile extends Rect {
         return new Rect([this.x, this.y, 1, 1]);
     }
     //manhattan distance
-    dist(other){
-        return Math.abs(this.x-other.x)+Math.abs(this.y-other.y);
+    dist(other) {
+        return Math.abs(this.x - other.x) + Math.abs(this.y - other.y);
     }
 
     /**
      * 
      * @param {Game} game 
      */
-    draw(game){
-        if(this.sprite!=null) {
+    draw(game) {
+        if (this.sprite != null) {
             game.sprites.base.draw(this.sprite, this.x, this.y);
         }
     }
@@ -80,15 +80,15 @@ export class Tile extends Rect {
 }
 
 export class Void extends Tile {
-    constructor(pos, sprite=null){
+    constructor(pos, sprite = null) {
         super(pos[0], pos[1], sprite, true, false);
     };
 
 }
 
 export class BeachLower extends Tile {
-    constructor(pos, sprite=null){
-        if(sprite==null) {
+    constructor(pos, sprite = null) {
+        if (sprite == null) {
             sprite = baseSetIds.BeachLower;
         }
         super(pos[0], pos[1], sprite, true, false);
@@ -96,8 +96,8 @@ export class BeachLower extends Tile {
 }
 
 export class BeachUpper extends Tile {
-    constructor(pos, sprite=null){
-        if(sprite==null) {
+    constructor(pos, sprite = null) {
+        if (sprite == null) {
             sprite = baseSetIds.BeachUpper;
         }
         super(pos[0], pos[1], sprite, true, false);
@@ -105,8 +105,8 @@ export class BeachUpper extends Tile {
 }
 
 export class WaterShallow extends Tile {
-    constructor(pos, sprite=null) {
-        if(sprite==null) {
+    constructor(pos, sprite = null) {
+        if (sprite == null) {
             sprite = baseSetIds.BeachLower;
         }
         super(pos[0], pos[1], sprite, true, false);
@@ -118,8 +118,8 @@ export class WaterShallow extends Tile {
 }
 
 export class WaterDeep extends Tile {
-    constructor(pos, sprite=null) {
-        if(sprite==null) {
+    constructor(pos, sprite = null) {
+        if (sprite == null) {
             sprite = baseSetIds.BeachLower;
         }
         super(pos[0], pos[1], sprite, true, false);
@@ -131,18 +131,18 @@ export class WaterDeep extends Tile {
     }
 }
 
-export class Floor extends Tile{
-    constructor(pos, sprite=null){
-        if(sprite==null) {
+export class Floor extends Tile {
+    constructor(pos, sprite = null) {
+        if (sprite == null) {
             sprite = tileIds.Floor;
         }
         super(pos[0], pos[1], sprite, true, false);
     };
 }
 
-export class Wall extends Tile{
-    constructor(pos, sprite=null){
-        if(sprite==null) {
+export class Wall extends Tile {
+    constructor(pos, sprite = null) {
+        if (sprite == null) {
             sprite = tileIds.Wall;
         }
         super(pos[0], pos[1], sprite, false, false);
@@ -152,8 +152,8 @@ export class Wall extends Tile{
     }
 }
 
-export class Ledge extends Tile{
-    constructor(pos){
+export class Ledge extends Tile {
+    constructor(pos) {
         super(pos[0], pos[1], tileIds.Ledge, true, false);
     };
     get standable() {
@@ -162,7 +162,7 @@ export class Ledge extends Tile{
 }
 
 export class Entrance extends Floor {
-    constructor(pos){
+    constructor(pos) {
         super(pos);
     }
     /**
@@ -172,43 +172,43 @@ export class Entrance extends Floor {
      * @param {string} action 
      */
     entityInteract(game, entity, action) {
-//        if(game.level>1) return;
+        //        if(game.level>1) return;
         if (entity instanceof Player) {
-            if(entity.isPlayer && action=='up' && game.level==entity.startLevel && entity.controlStates["up"] && !entity.oldControlStates["up"]){
+            if (entity.isPlayer && action == 'up' && game.level == entity.startLevel && entity.controlStates["up"] && !entity.oldControlStates["up"]) {
                 entity.cycleSprite(game);
             }
-    
+
         }
     }
 }
 
-export class Exit extends Tile{
-    constructor(pos, locked=false){
-        super(pos[0], pos[1], locked?tileIds.LockedExit:tileIds.Exit, true);
-        this._locked=locked
+export class Exit extends Tile {
+    constructor(pos, locked = false) {
+        super(pos[0], pos[1], locked ? tileIds.LockedExit : tileIds.Exit, true);
+        this._locked = locked
     }
 
-    draw(game){
-        if(game.competitiveMode && game.levelTime>game.startLevelTime/2) {
+    draw(game) {
+        if (game.competitiveMode && game.levelTime > game.startLevelTime / 2) {
             game.sprites.tiles.draw(tileIds.LockedExit, this.x, this.y);
             return;
         }
-        if(this.sprite!=null)
+        if (this.sprite != null)
             game.sprites.tiles.draw(this.sprite, this.x, this.y);
     }
-    
-    set locked(val){
-        this.sprite = val?tileIds.LockedExit:tileIds.Exit;
+
+    set locked(val) {
+        this.sprite = val ? tileIds.LockedExit : tileIds.Exit;
         this._locked = val;
     }
 
     entityInteract(game, entity, action) {
-        if(game.competitiveMode && game.levelTime>game.startLevelTime/2)
+        if (game.competitiveMode && game.levelTime > game.startLevelTime / 2)
             return;
-        if(entity.isPlayer && action == 'up' && entity.controlStates["up"] && !entity.oldControlStates["up"]){
+        if (entity.isPlayer && action == 'up' && entity.controlStates["up"] && !entity.oldControlStates["up"]) {
             entity.escaped = true;
             game.playSound('exitLevel');
-            if(game.competitiveMode)
+            if (game.competitiveMode)
                 entity.score += 2;
         }
     }
@@ -220,7 +220,7 @@ export class Kiosk extends Tile {
 
 export class KioskScreen extends Kiosk {
     constructor(pos) {
-        super(pos[0], pos[1], tileIds.KioskScreen, true, false); 
+        super(pos[0], pos[1], tileIds.KioskScreen, true, false);
         /**@type {InventoryItem[]} */
         this.items = [];
         /**@type {InventoryItem|null} */
@@ -236,7 +236,7 @@ export class KioskScreen extends Kiosk {
 
 export class KioskDispenser extends Kiosk {
     constructor(pos, kioskScreen) {
-        super(pos[0], pos[1], tileIds.KioskDispenser, true, false); 
+        super(pos[0], pos[1], tileIds.KioskDispenser, true, false);
         this.items = [];
         this.activeItem = -1;
         this.used = new Set();
@@ -244,37 +244,37 @@ export class KioskDispenser extends Kiosk {
     }
     setItems(items) {
         this.items = items.map(Item => new Item(this.screen))
-//        this.items = [];
-//        for(let i of items)
-//            this.items.push(new i(this.screen));
+        //        this.items = [];
+        //        for(let i of items)
+        //            this.items.push(new i(this.screen));
         this.activeItem = -1;
-        this.screen.activeItem = this.activeItem>=0? this.items[this.activeItem]: null;
+        this.screen.activeItem = this.activeItem >= 0 ? this.items[this.activeItem] : null;
     }
     entityInteract(game, entity, action) {
-        if(!entity.isPlayer)
+        if (!entity.isPlayer)
             return;
-        if(this.used.has(entity))
+        if (this.used.has(entity))
             return;
-        if(action=="down" && entity.controlStates["down"] && !entity.oldControlStates["down"]) {
+        if (action == "down" && entity.controlStates["down"] && !entity.oldControlStates["down"]) {
             game.playSound('kioskInteract');
-            this.activeItem = this.activeItem<this.items.length-1? this.activeItem+1:0;
+            this.activeItem = this.activeItem < this.items.length - 1 ? this.activeItem + 1 : 0;
         }
-        if(this.activeItem>=0 && action=="up" && entity.controlStates["up"] && !entity.oldControlStates["up"]) {
-            if(this.items.length==0)
+        if (this.activeItem >= 0 && action == "up" && entity.controlStates["up"] && !entity.oldControlStates["up"]) {
+            if (this.items.length == 0)
                 return;
             this.items[this.activeItem].activate(entity);
-//            this.items.splice(this.activeItem,1);
-//            this.activeItem = this.activeItem>0? this.activeItem-1:0;
+            //            this.items.splice(this.activeItem,1);
+            //            this.activeItem = this.activeItem>0? this.activeItem-1:0;
             this.used.add(entity);
             this.activeItem = -1;
             game.playSound('kioskDispense');
         }
-        this.screen.activeItem = this.activeItem>=0? this.items[this.activeItem]: null;
+        this.screen.activeItem = this.activeItem >= 0 ? this.items[this.activeItem] : null;
     }
 }
 
 export class GunPlatformJunction extends Tile {
-    constructor(pos){
+    constructor(pos) {
         super(pos[0], pos[1], tileIds.Wall, false, false);
     }
     /**
@@ -282,16 +282,16 @@ export class GunPlatformJunction extends Tile {
      * @param {Game} game 
      */
     initItems(game) {
-        if(game.tiles.below(this).tile.passable) {
+        if (game.tiles.below(this.pos).tile.passable) {
             // game.monsters.push(new GunPlatform(this));
         }
     }
 }
 
 export class TrapBlock extends Tile {
-    constructor(pos, type = null){
+    constructor(pos, type = null) {
         super(pos[0], pos[1], tileIds.TrapBlock, false, false);
-        if(type == null) {
+        if (type == null) {
             type = choose(['cycling', 'contact', 'static']);
         }
         this.type = type;
@@ -300,27 +300,27 @@ export class TrapBlock extends Tile {
         this.extendTime = 500;
         this.contactDelay = 500;
         this.timeOffset = 0;
-        this.boundingBox = new Rect([0.25,0.5,0.5,0.5])
+        this.boundingBox = new Rect([0.25, 0.5, 0.5, 0.5])
         this.triggered = false;
         this.trap = null;
         this.damage = 1;
     }
     /**@type {Tile['initItems']} */
     initItems(game) {
-        if(game.tiles.above(this).tile.passable) {
+        if (game.tiles.above(this.pos).tile.passable) {
             this.trap = new TrapBlade(this);
             game.items.push(this.trap);
         }
     }
     stoodOnBy(entity, vel) {
-        if(entity.isPlayer && !this.triggered && this.trap!=null) {
+        if (entity.isPlayer && !this.triggered && this.trap != null) {
             this.trap.triggered = true;
         }
         return !this.standable;
     }
     /**@type {Tile['draw']} */
     draw(game) {
-        if(this.trap!=null) {
+        if (this.trap != null) {
             this.trap.drawAsTile(game); //Render the blade beneath the tile -- this is a bit of a kludge
         }
         super.draw(game);
@@ -328,31 +328,31 @@ export class TrapBlock extends Tile {
 }
 
 export class Tree extends Tile {
-    constructor(pos, type, map, height=3, level=1) {
+    constructor(pos, type, map, height = 3, level = 1) {
         //TODO: This manipulates the map unlike all other tile class constructors
         let sprite;
         let climbable;
         let t = map.above(pos);
-        switch(type) {
+        switch (type) {
             case 'apple':
-                sprite = level==1? tileIds.TrunkBox : (level==height || !t.passable ? tileIds.AppleTreeTop: tileIds.Trunk);
-                climbable = level==height-1;
+                sprite = level == 1 ? tileIds.TrunkBox : (level == height || !t.passable ? tileIds.AppleTreeTop : tileIds.Trunk);
+                climbable = level == height - 1;
                 break;
             case 'maple':
-                sprite = level==1? tileIds.TrunkBox : (level==height || !t.passable ? tileIds.TreeTop: tileIds.Trunk);
-                climbable = level==height-1;
+                sprite = level == 1 ? tileIds.TrunkBox : (level == height || !t.passable ? tileIds.TreeTop : tileIds.Trunk);
+                climbable = level == height - 1;
                 break;
             case 'pine':
-                sprite = level==1? tileIds.PineBox : (level==height || !t.passable ? tileIds.PineTop: tileIds.PineMid);
-                climbable = level<height;
+                sprite = level == 1 ? tileIds.PineBox : (level == height || !t.passable ? tileIds.PineTop : tileIds.PineMid);
+                climbable = level < height;
                 break;
         }
         super(pos[0], pos[1], sprite, true, climbable);
         this.climingLevel = 1;
-        this.treeAbove = (level<height && t.passable)? map.set(t, Tree, type, map, height, level+1) : null;
+        this.treeAbove = (level < height && t.passable) ? map.set(t, Tree, type, map, height, level + 1) : null;
     }
     destroy() {
-        if(this.treeAbove != null) {
+        if (this.treeAbove != null) {
             this.treeAbove.destroy();
         }
     }

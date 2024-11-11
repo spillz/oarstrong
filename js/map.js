@@ -10,30 +10,30 @@ import { choose, getRandomInt, randomRange, Rect, tryTo, Vec2 } from "./util";
  * 
  * @param {Game} game 
  */
-export function generateLevel(game){
+export function generateLevel(game) {
     generateTiles(game);
 
     game.monsters = [];
     generateMonsters(game, game.tiles.startTile.pos);
 
     game.items = [];
-    game.cells = 3+Math.floor(game.level/5);
+    game.cells = 3 + Math.floor(game.level / 5);
     game.cellsCollected = 0;
-    for(let i=0;i<game.cells;i++) {
+    for (let i = 0; i < game.cells; i++) {
         game.items.push(new Treasure(randomPassableTile(game.tiles)));
     }
 
-    for(let t of game.tiles.iterAll()) {
+    for (let t of game.tiles.iterAll()) {
         t.initItems(game);
     }
 }
 
 function buildLab(tiles, quad) {
-    let ctr=quad.w*quad.h/40;
-    for(let boxPos of tiles.iterRandom(quad, Floor, Wall, 1)) {
-        if(!tiles.below(boxPos).passable && tiles.above(boxPos).passable) {
+    let ctr = quad.w * quad.h / 40;
+    for (let boxPos of tiles.iterRandom(quad, Floor, Wall, 1)) {
+        if (!tiles.below(boxPos).passable && tiles.above(boxPos).passable) {
             let bioType = getRandomInt(4);
-            switch(bioType) {
+            switch (bioType) {
                 // case 0:
                 //     tiles.set(boxPos, Schematics);
                 //     break;
@@ -49,7 +49,7 @@ function buildLab(tiles, quad) {
             }
             ctr--;
         }
-        if(ctr<=0) {
+        if (ctr <= 0) {
             break;
         }
     }
@@ -70,7 +70,7 @@ function buildWarzone(tiles, quad) {
     // }
     // ctr=getRandomInt(quad.w*quad.h/80, quad.w*quad.h/10);
     // for(let boxPos of tiles.iterRandom(quad, Floor, null, 1)) {
-        
+
     //     if(!tiles.below(boxPos).passable && tiles.above(boxPos).passable) {
     //         tiles.set(boxPos, Floor, choose([tileIds.Debris1, tileIds.BlastedPillar]));
     //         ctr--;
@@ -129,7 +129,7 @@ function buildGarden(tiles, quad) {
     // }
 }
 
-function buildRoom(tiles, quad, spiky=false) {
+function buildRoom(tiles, quad, spiky = false) {
     // let ledgeRarity=Math.max(10-game.level,3);
     // let disRarity=Math.max(10-game.level,3);
     // let platRarity=Math.max(10-game.level,3);
@@ -190,7 +190,7 @@ function buildRoom(tiles, quad, spiky=false) {
     // }
 }
 
-function buildCelledRooms(tiles, W, H, biome='base', wallType=Wall) {
+function buildCelledRooms(tiles, W, H, biome = 'base', wallType = Wall) {
     // //Draw border
     // for(let t of tiles.iterRectBorder(new Rect([0,0,W,H]))) {
     //     if(!(t instanceof wallType)) {
@@ -301,18 +301,18 @@ function generateTiles(game) {
     // populate individual rooms
     // set entrance, locker, kiosk and exit tiles
     // todo: should check pathing to make sure all can be accessed
-    
+
     let biome = 'island';
     // let biome = choose(['platforms', 'spiky', 'garden', 'warzone', 'lab', 'mixed']); //'mine', 
     let mapShape;
-    if(game.camera.scrollable && game.prefDimW==null && game.prefDimH==null) {
+    if (game.camera.scrollable && game.prefDimW == null && game.prefDimH == null) {
         mapShape = 0;
-        switch(mapShape) {
+        switch (mapShape) {
             case 0:
                 game.dimW = 30;
                 game.dimH = 30;
                 break;
-            } 
+        }
     }
 
     //Clear the level
@@ -320,87 +320,87 @@ function generateTiles(game) {
     const H = game.dimH;
     game.tiles = new TileMap(W, H);
     let tiles = game.tiles;
-    tiles.fillRect(new Rect([0,0,W,H]), WaterDeep);
-    tiles.fillCircle([15,15], 10.5, WaterShallow);
-    tiles.fillCircle([15,15], 8.5, BeachLower);
-    tiles.fillCircle([16,16], 3.5, BeachUpper);
+    tiles.fillRect(new Rect([0, 0, W, H]), WaterDeep);
+    tiles.fillCircle([15, 15], 10.5, WaterShallow);
+    tiles.fillCircle([15, 15], 8.5, BeachLower);
+    tiles.fillCircle([16, 16], 3.5, BeachUpper);
 
-//     //Build the rooms
-//     keyRooms = buildCelledRooms(tiles, W, H, biome);
+    //     //Build the rooms
+    //     keyRooms = buildCelledRooms(tiles, W, H, biome);
 
-//     //Define the quadrants
-//     let entryQuad = keyRooms[0].shrinkBorders(2);
-//     let kioskQuad = keyRooms[0].shrinkBorders(2);
-//     let exitQuad = keyRooms[1].shrinkBorders(2);
-//     let lockerQuad = keyRooms[2].shrinkBorders(2);
-//     console.log('keyRooms:', keyRooms)
+    //     //Define the quadrants
+    //     let entryQuad = keyRooms[0].shrinkBorders(2);
+    //     let kioskQuad = keyRooms[0].shrinkBorders(2);
+    //     let exitQuad = keyRooms[1].shrinkBorders(2);
+    //     let lockerQuad = keyRooms[2].shrinkBorders(2);
+    //     console.log('keyRooms:', keyRooms)
 
-//     //Put in the kiosk
-//     let q = kioskQuad;
-//     let kioskPos = null;
-//     for(kioskPos of shuffle(Array.from(tiles.iterRect(q))))
-//         if(tiles.at(kioskPos) instanceof Floor 
-//           && tiles.below(kioskPos).standable) // && (tiles.above(kioskPos) instanceof Wall 
-// //        || (tiles.above(kioskPos) instanceof Floor))
-//             break;
-//     tiles.below(kioskPos).replace(Wall);
-//     let ks = tiles.above(kioskPos).replace(KioskScreen);
-//     let kt=tiles.set(kioskPos, KioskDispenser, ks);
+    //     //Put in the kiosk
+    //     let q = kioskQuad;
+    //     let kioskPos = null;
+    //     for(kioskPos of shuffle(Array.from(tiles.iterRect(q))))
+    //         if(tiles.at(kioskPos) instanceof Floor 
+    //           && tiles.below(kioskPos).standable) // && (tiles.above(kioskPos) instanceof Wall 
+    // //        || (tiles.above(kioskPos) instanceof Floor))
+    //             break;
+    //     tiles.below(kioskPos).replace(Wall);
+    //     let ks = tiles.above(kioskPos).replace(KioskScreen);
+    //     let kt=tiles.set(kioskPos, KioskDispenser, ks);
 
-//     //Put in the locker
-//     q = lockerQuad;
-//     let lPos = null;
-//     for(lPos of shuffle(Array.from(tiles.iterRect(q))))
-//         if(tiles.at(lPos) instanceof Floor 
-//           && tiles.below(lPos).standable) // && (tiles.above(kioskPos) instanceof Wall 
-// //        || (tiles.above(kioskPos) instanceof Floor))
-//             break;
-//     tiles.below(lPos).replace(Wall);
-//     tiles.set(lPos, Locker);
+    //     //Put in the locker
+    //     q = lockerQuad;
+    //     let lPos = null;
+    //     for(lPos of shuffle(Array.from(tiles.iterRect(q))))
+    //         if(tiles.at(lPos) instanceof Floor 
+    //           && tiles.below(lPos).standable) // && (tiles.above(kioskPos) instanceof Wall 
+    // //        || (tiles.above(kioskPos) instanceof Floor))
+    //             break;
+    //     tiles.below(lPos).replace(Wall);
+    //     tiles.set(lPos, Locker);
 
-//     //Put in the entrance
-//     q = entryQuad;
-// //    q.h = Math.min(q.h,4);
-// //    q.w = Math.min(3,q.w)
-//     let startPos = null;
-//     for(startPos of shuffle(Array.from(tiles.iterRect(q))))
-//         if(kioskPos.dist(startPos)>3 && tiles.at(startPos) instanceof Floor && tiles.below(startPos).standable)
-//             break;
+    //     //Put in the entrance
+    //     q = entryQuad;
+    // //    q.h = Math.min(q.h,4);
+    // //    q.w = Math.min(3,q.w)
+    //     let startPos = null;
+    //     for(startPos of shuffle(Array.from(tiles.iterRect(q))))
+    //         if(kioskPos.dist(startPos)>3 && tiles.at(startPos) instanceof Floor && tiles.below(startPos).standable)
+    //             break;
 
-//     tiles.set(startPos, Entrance);
-//     tiles.below(startPos).replace(Wall);
-//     let lt = tiles.leftOf(startPos);
-//     if(!lt.passable)
-//         tiles.set(lt, Floor);
-//     let rt = tiles.rightOf(startPos);
-//     if(!rt.passable)
-//         tiles.set(rt, Floor);        
+    //     tiles.set(startPos, Entrance);
+    //     tiles.below(startPos).replace(Wall);
+    //     let lt = tiles.leftOf(startPos);
+    //     if(!lt.passable)
+    //         tiles.set(lt, Floor);
+    //     let rt = tiles.rightOf(startPos);
+    //     if(!rt.passable)
+    //         tiles.set(rt, Floor);        
 
-//     //Put in the exit
-//     q = exitQuad;
+    //     //Put in the exit
+    //     q = exitQuad;
 
-//     let endPos = null;
-//     for(endPos of shuffle(Array.from(tiles.iterRect(q))))
-//         if(tiles.at(endPos) instanceof Floor && tiles.below(endPos) instanceof Wall)
-//             break;
-//     tiles.set(endPos, Exit);
-//     lt = tiles.leftOf(endPos);
-//     if(!lt.passable)
-//         tiles.set(lt, Floor);
-//     rt = tiles.rightOf(endPos);
-//     if(!rt.passable)
-//         tiles.set(rt, Floor);
+    //     let endPos = null;
+    //     for(endPos of shuffle(Array.from(tiles.iterRect(q))))
+    //         if(tiles.at(endPos) instanceof Floor && tiles.below(endPos) instanceof Wall)
+    //             break;
+    //     tiles.set(endPos, Exit);
+    //     lt = tiles.leftOf(endPos);
+    //     if(!lt.passable)
+    //         tiles.set(lt, Floor);
+    //     rt = tiles.rightOf(endPos);
+    //     if(!rt.passable)
+    //         tiles.set(rt, Floor);
 
-//     console.log('map start pos:',startPos);
-//     console.log('map end pos:',endPos);
-//     console.log('kiosk pos:',kioskPos);
-//     console.log('locker pos:',lPos);
+    //     console.log('map start pos:',startPos);
+    //     console.log('map end pos:',endPos);
+    //     console.log('kiosk pos:',kioskPos);
+    //     console.log('locker pos:',lPos);
 
-    tiles.startTile = tiles.at([15,15]);
-    tiles.endTile = tiles.at([10,10]);
-    let kioskPos = [20,20]
-    let ks = tiles.above(kioskPos).replace(KioskScreen);
-    let kt=tiles.set(kioskPos, KioskDispenser, ks);
+    tiles.startTile = tiles.at([15, 15]);
+    tiles.endTile = tiles.at([10, 10]);
+    let kioskPos = [20, 20]
+    let ks = tiles.above(new Vec2(kioskPos)).replace(KioskScreen);
+    let kt = tiles.set(kioskPos, KioskDispenser, ks);
     tiles.kioskTile = kt;
 }
 
@@ -412,18 +412,18 @@ function generateTiles(game) {
  * @param {boolean} standable_not_passable 
  * @returns 
  */
-export function randomPassableTile(tiles, playerPos=null, standable=false, standable_not_passable=true){
+export function randomPassableTile(tiles, playerPos = null, standable = false, standable_not_passable = true) {
     let tile;
-    tryTo('get random passable tile', function(){
-        let x = randomRange(0, tiles.dimW-1);
-        let y = randomRange(0, tiles.dimH-1);
+    tryTo('get random passable tile', function () {
+        let x = randomRange(0, tiles.dimW - 1);
+        let y = randomRange(0, tiles.dimH - 1);
         tile = tiles.at([x, y]);
-        if(playerPos!=null)
-            return tile.passable && tile.pos.dist(playerPos)>3;
-            // return tile.passable && tile.pos.dist(playerPos)>3 && (!standable || game.tiles.below(tile).standable && !(standable_not_passable && game.tiles.below(tile).passable));
+        if (playerPos != null)
+            return tile.passable && tile.pos.dist(playerPos) > 3;
+        // return tile.passable && tile.pos.dist(playerPos)>3 && (!standable || game.tiles.below(tile).standable && !(standable_not_passable && game.tiles.below(tile).passable));
         else
             return true;
-            // return tile.passable  && (!standable || game.tiles.below(tile).standable);
+        // return tile.passable  && (!standable || game.tiles.below(tile).standable);
     });
     return tile;
 }
@@ -433,9 +433,9 @@ export function randomPassableTile(tiles, playerPos=null, standable=false, stand
  * @param {Game} game 
  * @param {Vec2} playerPos 
  */
-export function generateMonsters(game, playerPos){
-    let numMonsters = Math.min(2*game.level, 15) + 5;
-    for(let i=0;i<numMonsters;i++){
+export function generateMonsters(game, playerPos) {
+    let numMonsters = Math.min(2 * game.level, 15) + 5;
+    for (let i = 0; i < numMonsters; i++) {
         spawnMonster(game, playerPos, false);
     }
 }
@@ -446,7 +446,7 @@ export function generateMonsters(game, playerPos){
  * @param {Vec2} playerPos 
  * @param {boolean} standable 
  */
-export function spawnMonster(game, playerPos=null, standable=false){
+export function spawnMonster(game, playerPos = null, standable = false) {
     let m = [];
     m = [Jelly];
     // if(game.level<=5)

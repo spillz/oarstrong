@@ -9,31 +9,31 @@
 export var controlStates = {
     'left': false,
     'right': false,
-    'up':false,
-    'down':false,
-    'cycle':false,
-    'use':false,
-    'jump':false,
-    'camera':false,
-    'menu':false,
+    'up': false,
+    'down': false,
+    'cycle': false,
+    'use': false,
+    'jump': false,
+    'camera': false,
+    'menu': false,
 };
-var controlStates0 = {... controlStates};
+var controlStates0 = { ...controlStates };
 
 export function initializeControlStates() {
-    return {...controlStates0};
+    return { ...controlStates0 };
 }
 
 /**@type {ControlStatesType} */
-export var oldControlStates = {... controlStates};
+export var oldControlStates = { ...controlStates };
 /**@type {ControlStatesType} */
-export var newControlStates = {... controlStates};
+export var newControlStates = { ...controlStates };
 
 /**
  * 
  * @param {ControlStatesType} constrolStates 
  */
 export function setOldControlStates(constrolStates) {
-    oldControlStates = {...controlStates};
+    oldControlStates = { ...controlStates };
 }
 
 /**@type {Controller|null} */
@@ -64,35 +64,35 @@ export var defaultKeyMap = {
 
 export class Controller {
     constructor() {
-        this.controlStates = {... controlStates0}
+        this.controlStates = { ...controlStates0 }
         this.attach_to_player();
-        window.addEventListener('blur', e=>{
+        window.addEventListener('blur', e => {
             this.clearPressedAll();
         });
     }
-    attach_to_player(player=null) {
+    attach_to_player(player = null) {
         this.player = player;
         lastController = this;
-        if(player!=null) {
+        if (player != null) {
             this.player.controller = this;
         }
     }
-    set(action, state=true) {
+    set(action, state = true) {
         controlStates[action] = state;
-        lastController = this; 
+        lastController = this;
         let player = this.player;
-        if(player!=null) {
+        if (player != null) {
             player.controlStates[action] = state;
         }
     }
     clearPressedAll() {
-        for(const c in this.controlStates) {
+        for (const c in this.controlStates) {
             this.controlStates[c] = false;
         }
     }
     vibrate(intensity1, intensity2, duration) {
 
-    } 
+    }
 }
 
 export class KeyboardController extends Controller {
@@ -101,33 +101,33 @@ export class KeyboardController extends Controller {
      * @param {Game} game 
      * @param {Object<string, string>} keyMap 
      */
-    constructor(game, keyMap=null) {
+    constructor(game, keyMap = null) {
         super();
         this.game = game;
-        if(keyMap==null)
+        if (keyMap == null)
             keyMap = defaultKeyMap;
         this.keyMap = keyMap;
         let that = this;
-        document.onkeydown = function(e) {that.keyDownHandler(e)};
-        document.onkeyup = function(e) {that.keyUpHandler(e)};
+        document.onkeydown = function (e) { that.keyDownHandler(e) };
+        document.onkeyup = function (e) { that.keyUpHandler(e) };
     }
-    keyDownHandler(e){
-        if(e.key=="p") { //Keyboard only shortcuts
+    keyDownHandler(e) {
+        if (e.key == "p") { //Keyboard only shortcuts
             this.game.fillScreen = !this.game.fillScreen;
             this.game.updateWindowSize();
         }
-        if(e.key=="f") {
+        if (e.key == "f") {
             this.game.showFPS = !this.game.showFPS;
             this.game.updateWindowSize();
         }
-        if(e.key=="G") { //capital G to avoid accidental keypress
+        if (e.key == "G") { //capital G to avoid accidental keypress
             this.game.cullOffCamera = !this.game.cullOffCamera;
         }
-        if(e.key in this.keyMap)
+        if (e.key in this.keyMap)
             this.set(this.keyMap[e.key], true);
     }
-    keyUpHandler(e){
-        if(e.key in this.keyMap)
+    keyUpHandler(e) {
+        if (e.key in this.keyMap)
             this.set(this.keyMap[e.key], false);
     }
 }
@@ -143,28 +143,29 @@ export class GamepadController extends Controller {
         this.game = game;
         this.gamepad = gamepad;
         this.thresh = 0.2;
-        this.internalStates = {... this.controlStates};
+        this.internalStates = { ... this.controlStates };
     }
-    set(action, state=true) {
-        if(this.internalStates[action]==state)
+    set(action, state = true) {
+        if (this.internalStates[action] == state)
             return;
         this.internalStates[action] = state;
         super.set(action, state);
-    }   
-//    e.gamepad.index, e.gamepad.id,
-//    e.gamepad.buttons.length, e.gamepad.axes.length);
+    }
+    //    e.gamepad.index, e.gamepad.id,
+    //    e.gamepad.buttons.length, e.gamepad.axes.length);
     vibrate(intensity1, intensity2, duration) {
-        if(this.game.activePlayers.length==1) {
+        if (this.game.activePlayers.length == 1) {
             //default vibration does not support intensity -- could simulate by staggering pulses over the duration
-            window.navigator.vibrate(duration); 
+            window.navigator.vibrate(duration);
         }
-        if(this.gamepad.vibrationActuator!=null) {
-            this.gamepad.vibrationActuator.playEffect('dual-rumble', 
+        if (this.gamepad.vibrationActuator != null) {
+            this.gamepad.vibrationActuator.playEffect('dual-rumble',
                 {
                     startDelay: 0,
                     duration: duration,
                     weakMagnitude: intensity1,
-                    strongMagnitude: intensity2 });
+                    strongMagnitude: intensity2
+                });
         }
         //Firefox version
         //Need to check there are two vibrators
@@ -184,54 +185,52 @@ export class GamepadManager {
     constructor(game) {
         let that = this;
         this.game = game;
-        window.addEventListener("gamepadconnected", function(e){that.connected(e)});
-        window.addEventListener("gamepaddisconnected", function(e){that.disconnected(e)});
+        window.addEventListener("gamepadconnected", function (e) { that.connected(e) });
+        window.addEventListener("gamepaddisconnected", function (e) { that.disconnected(e) });
     }
     connected(e) {
         this.gamepads[e.gamepad.index] = new GamepadController(this.game, e.gamepad);
     }
     disconnected(e) {
         let g = this.gamepads[e.gamepad.index];
-        if(g.player!=null) {
+        if (g.player != null) {
             g.player.dead = true;
             g.player.dropFromGame = true;
         }
         delete this.gamepads[e.gamepad.index];
     }
     update_gamepad_states() {
-        let gps = navigator.getGamepads(); 
-        if(gps==null)
+        let gps = navigator.getGamepads();
+        if (gps == null)
             return;
-        for(let g of gps) {
-            if(g==null)
+        for (let g of gps) {
+            if (g == null)
                 continue;
             let c = this.gamepads[g.index];
             c.gamepad = g; //put the latest state in the gamepad object
-            c.set("jump",this.buttonPressed(g.buttons[0]));
-            c.set("cycle",this.buttonPressed(g.buttons[1]) || this.buttonPressed(g.buttons[6]));
-            c.set("use",this.buttonPressed(g.buttons[2]) || this.buttonPressed(g.buttons[7]));
-            c.set("door",this.buttonPressed(g.buttons[3]) || this.buttonPressed(g.buttons[4]));
-            c.set("run",this.buttonPressed(g.buttons[5]));
+            c.set("jump", this.buttonPressed(g.buttons[0]));
+            c.set("cycle", this.buttonPressed(g.buttons[1]) || this.buttonPressed(g.buttons[6]));
+            c.set("use", this.buttonPressed(g.buttons[2]) || this.buttonPressed(g.buttons[7]));
+            c.set("door", this.buttonPressed(g.buttons[3]) || this.buttonPressed(g.buttons[4]));
+            c.set("run", this.buttonPressed(g.buttons[5]));
             c.set("camera", this.buttonPressed(g.buttons[12]));
             c.set("menu", this.buttonPressed(g.buttons[9]));
-            c.set("left",g.axes[0]<-c.thresh && (g.axes[0]<-0.5*Math.abs(g.axes[1])));
-            c.set("right",g.axes[0]>c.thresh && (g.axes[0]>0.5*Math.abs(g.axes[1])));
-            c.set("up",g.axes[1]<-c.thresh && (g.axes[1]<-0.5*Math.abs(g.axes[0])));
-            c.set("down",g.axes[1]>c.thresh    && (g.axes[1]>-0.5*Math.abs(g.axes[0])));
+            c.set("left", g.axes[0] < -c.thresh && (g.axes[0] < -0.5 * Math.abs(g.axes[1])));
+            c.set("right", g.axes[0] > c.thresh && (g.axes[0] > 0.5 * Math.abs(g.axes[1])));
+            c.set("up", g.axes[1] < -c.thresh && (g.axes[1] < -0.5 * Math.abs(g.axes[0])));
+            c.set("down", g.axes[1] > c.thresh && (g.axes[1] > -0.5 * Math.abs(g.axes[0])));
         }
     }
     buttonPressed(b) {
-        if (typeof(b) == "object")
+        if (typeof (b) == "object")
             return b.pressed;
         return b == 1.0;
     }
     attach_all_to_player(player) {
-        for(let g of Object.keys(this.gamepads))
-            this.gamepads[g].attach_to_player(player);
+        for (let g of Object.keys(this.gamepads)) this.gamepads[g].attach_to_player(player);
     }
     release_all_players() {
-        for(let g of Object.keys(this.gamepads))
-            this.gamepads[g].attach_to_player();
+        for (let g of Object.keys(this.gamepads)) this.gamepads[g].attach_to_player();
     }
 }
 
@@ -249,18 +248,18 @@ export class TouchController extends Controller {
         if (canvas instanceof HTMLCanvasElement) {
             this.canvas = canvas
             let that = this;
-            canvas.addEventListener('touchstart', function(ev){that.process_touchstart(ev);}, false);
-            canvas.addEventListener('touchmove', function(ev){that.process_touchmove(ev);}, false);
-            canvas.addEventListener('touchcancel', function(ev){that.process_touchend(ev);}, false);
-            canvas.addEventListener('touchend', function(ev){that.process_touchend(ev);}, false);
-            document.addEventListener('backbutton', function(ev){that.process_back(ev);}, true);
+            canvas.addEventListener('touchstart', function (ev) { that.process_touchstart(ev); }, false);
+            canvas.addEventListener('touchmove', function (ev) { that.process_touchmove(ev); }, false);
+            canvas.addEventListener('touchcancel', function (ev) { that.process_touchend(ev); }, false);
+            canvas.addEventListener('touchend', function (ev) { that.process_touchend(ev); }, false);
+            document.addEventListener('backbutton', function (ev) { that.process_back(ev); }, true);
         }
         // Register touch event handlers
-        this.dPad = [-1,0,0];
-        this.butJump = [-1,0,0];
-        this.butInv = [-1,0,0];
-        this.butUse = [-1,0,0];
-        this.butCamera = [-1,0,0];
+        this.dPad = [-1, 0, 0];
+        this.butJump = [-1, 0, 0];
+        this.butInv = [-1, 0, 0];
+        this.butUse = [-1, 0, 0];
+        this.butCamera = [-1, 0, 0];
     }
     process_back(ev) {
         console.log('Back pressed', ev)
@@ -272,19 +271,19 @@ export class TouchController extends Controller {
         // Use the event's data to call out to the appropriate gesture handlers
         let canvas = this.canvas;
         let t = ev.touches[0];
-        for(let t of ev.changedTouches) { 
-            if(t.clientX<0.5*canvas.width) {
-                if(t.clientY>0.33*canvas.height) this.dPad = [t.identifier, t.clientX, t.clientY];
+        for (let t of ev.changedTouches) {
+            if (t.clientX < 0.5 * canvas.width) {
+                if (t.clientY > 0.33 * canvas.height) this.dPad = [t.identifier, t.clientX, t.clientY];
                 else {
                     this.set("camera");
                     this.butCamera = [t.identifier, t.clientX, t.clientY];
                 }
             } else {
-                if(t.clientY>0.66*canvas.height) {
+                if (t.clientY > 0.66 * canvas.height) {
                     this.set("jump");
                     this.butJump = [t.identifier, t.clientX, t.clientY];
                 }
-                else if(t.clientY<0.33*canvas.height) {
+                else if (t.clientY < 0.33 * canvas.height) {
                     this.set("cycle");
                     this.butInv = [t.identifier, t.clientX, t.clientY];
                 }
@@ -293,43 +292,43 @@ export class TouchController extends Controller {
                     this.butUse = [t.identifier, t.clientX, t.clientY];
                 }
             }
-        }   
+        }
         ev.preventDefault();
     }
     // touchmove handler
     process_touchmove(ev) {
         // Set call preventDefault()
-        for(let t of ev.changedTouches) { 
-            if(t.identifier == this.dPad[0]) {
-                let x=this.dPad[1];
-                let y=this.dPad[2];
-                for(let k of ["left","right","up","down","run","camera"])
+        for (let t of ev.changedTouches) {
+            if (t.identifier == this.dPad[0]) {
+                let x = this.dPad[1];
+                let y = this.dPad[2];
+                for (let k of ["left", "right", "up", "down", "run", "camera"])
                     this.set(k, false);
-                this.set("left", t.clientX<x-0.1*this.game.tileSize  && (t.clientX-x<-0.5*Math.abs(t.clientY-y)))
-                this.set("right", t.clientX>x+0.1*this.game.tileSize && (t.clientX-x>0.5*Math.abs(t.clientY-y)));
-                this.set("up", t.clientY<y-0.1*this.game.tileSize    && (t.clientY-y<-0.5*Math.abs(t.clientX-x)));
-                this.set("down", t.clientY>y+0.1*this.game.tileSize  && (t.clientY-y>0.5*Math.abs(t.clientX-x)));
-                this.set("run", t.clientX<x-this.game.tileSize || t.clientX>x+this.game.tileSize
-                                || t.clientY>y+this.game.tileSize || t.clientY<y-this.game.tileSize);
+                this.set("left", t.clientX < x - 0.1 * this.game.tileSize && (t.clientX - x < -0.5 * Math.abs(t.clientY - y)))
+                this.set("right", t.clientX > x + 0.1 * this.game.tileSize && (t.clientX - x > 0.5 * Math.abs(t.clientY - y)));
+                this.set("up", t.clientY < y - 0.1 * this.game.tileSize && (t.clientY - y < -0.5 * Math.abs(t.clientX - x)));
+                this.set("down", t.clientY > y + 0.1 * this.game.tileSize && (t.clientY - y > 0.5 * Math.abs(t.clientX - x)));
+                this.set("run", t.clientX < x - this.game.tileSize || t.clientX > x + this.game.tileSize
+                    || t.clientY > y + this.game.tileSize || t.clientY < y - this.game.tileSize);
             }
         }
         ev.preventDefault();
     }
     // touchend handler
     process_touchend(ev) {
-        for(let t of ev.changedTouches) {
-            if(t.identifier==this.dPad[0]) {
-                for(let k of ["left","right","up","down"])
-                    this.set(k,false);
-                this.dPad=[-1,0,0];
+        for (let t of ev.changedTouches) {
+            if (t.identifier == this.dPad[0]) {
+                for (let k of ["left", "right", "up", "down"])
+                    this.set(k, false);
+                this.dPad = [-1, 0, 0];
             }
-            if(t.identifier==this.butInv[0])
+            if (t.identifier == this.butInv[0])
                 this.set("cycle", false);
-            if(t.identifier==this.butUse[0])
+            if (t.identifier == this.butUse[0])
                 this.set("use", false);
-            if(t.identifier==this.butJump[0])
+            if (t.identifier == this.butJump[0])
                 this.set("jump", false);
-            if(t.identifier==this.butCamera[0])
+            if (t.identifier == this.butCamera[0])
                 this.set("camera", false);
         }
         ev.preventDefault();

@@ -57,7 +57,7 @@ export class Chips extends Entity {
             entity.selectedTimer.reset(500);
             entity.selectedSprite = inv.sprite;
             entity.chips += this.value;
-            this.dead = true;    
+            this.dead = true;
         }
     }
 
@@ -84,12 +84,12 @@ export class DeadPlayer extends Entity {
     /**@type {Entity['update']} */
     update(game, millis) {
         this.elapsed += millis;
-        if(this.elapsed>this.timer) this.dead = true;
+        if (this.elapsed > this.timer) this.dead = true;
         //todo: inherit player momentum, apply gravity (Or just use the player class and a drop timer)
     }
     /**@type {Entity['draw']} */
     draw(game) {
-        if (this.sprite.length===2) {
+        if (this.sprite.length === 2) {
             game.sprites.players.draw(this.sprite, this.getDisplayX(), this.getDisplayY(), this.getFlipped());
         }
     }
@@ -152,7 +152,7 @@ export class BootsPickup extends Entity {
                 entity.airJumps += 1;
             else if (this.bootType == 3)
                 entity.spikedBoots += 1;
-            this.dead = true;    
+            this.dead = true;
         }
     }
 }
@@ -220,9 +220,9 @@ export class MonsterBoom extends Entity {
             this.dead = true;
             game.playSound('boom');
             //TODO: base intensity on distance from EACH player
-            for(let p of game.activePlayers) {
-                if(!p.dead) {
-                    p.controller.vibrate(0.5,0.5,250);
+            for (let p of game.activePlayers) {
+                if (!p.dead) {
+                    p.controller.vibrate(0.5, 0.5, 250);
                 }
             }
         }
@@ -249,16 +249,16 @@ export class Boom extends Entity {
 }
 
 export class Shot extends Entity {
-    constructor(player, shotDamage = 1, angle = 0, facing = 1, speedRatio=1.0, pos=null) {
+    constructor(player, shotDamage = 1, angle = 0, facing = 1, speedRatio = 1.0, pos = null) {
         super(null, entityItemIds.Shot1);
         this.player = player;
-        this.pos = pos==null? new Vec2(player.pos):new Vec2(pos);
+        this.pos = pos == null ? new Vec2(player.pos) : new Vec2(pos);
         this.facing = facing;
-        this.pos.x += 0.2 * facing * (angle == 90?1:0) + 0.4 * Math.cos(Math.PI * angle / 180)
+        this.pos.x += 0.2 * facing * (angle == 90 ? 1 : 0) + 0.4 * Math.cos(Math.PI * angle / 180)
         this.pos.y += 0.4 * Math.sin(Math.PI * angle / 180)
         this.vel.x = speedRatio * 1.0 / 60 * Math.cos(Math.PI * angle / 180)
         this.vel.y = speedRatio * 1.0 / 60 * Math.sin(Math.PI * angle / 180)
-        this.angle = angle - 180 * (facing < 0?1:0);
+        this.angle = angle - 180 * (facing < 0 ? 1 : 0);
         if (shotDamage == 2)
             this.sprite = entityItemIds.Shot2;
         if (shotDamage >= 3)
@@ -281,7 +281,7 @@ export class Shot extends Entity {
             this.dead = true;
         } else {
             let monsters;
-            if(this.player.isPlayer) {
+            if (this.player.isPlayer) {
                 monsters = game.monsters_with_other_players(this.player);
             } else {
                 monsters = game.monsters_and_players(true, this.player);
@@ -303,7 +303,7 @@ export class Shot extends Entity {
     }
     /**@type {Entity['draw']} */
     draw(game) {
-        if (this.sprite.length===2) {
+        if (this.sprite.length === 2) {
             game.sprites.entitiesItems.drawRotated(this.sprite, this.getDisplayX(), this.getDisplayY(), this.angle, this.facing < 0);
         }
     }
@@ -320,20 +320,18 @@ export class LiveGrenade extends Entity {
      * @param {number} facing 
      * @param {number} base_vel 
      */
-    constructor(tile, player, damage = 3, radius = 2, facing = 1, base_vel = 1.0/80) {
+    constructor(tile, player, damage = 3, radius = 2, facing = 1, base_vel = 1.0 / 80) {
         super(null, entityItemIds.LiveGrenade);
         this.boundingBox = new Rect([0.4, 0.4, 0.2, 0.2])
         this.player = player;
         this.pos = player.pos.add([facing * player.boundingBox.w * 0.75, 0]);
         let t = tile;
-        if(!t.passable) { //Don't let player drop tiles inside of non-passable tiles
-            if(facing>0 && this.bounds().right > t.x)
-                this.pos.x -= this.bounds().right - t.x;
-            if(facing<0 && this.bounds().x < t.right)
-                this.pos.x += this.bounds().x - t.right;
+        if (!t.passable) { //Don't let player drop tiles inside of non-passable tiles
+            if (facing > 0 && this.bounds().right > t.x) this.pos.x -= this.bounds().right - t.x;
+            if (facing < 0 && this.bounds().x < t.right) this.pos.x += this.bounds().x - t.right;
         }
         this.facing = facing;
-        this.vel = new Vec2([0,base_vel]);
+        this.vel = new Vec2([0, base_vel]);
         this.damage = damage;
         this.radius = radius;
         this.canFall = true;
@@ -349,7 +347,8 @@ export class LiveGrenade extends Entity {
             return;
         }
         let player = this.player;
-        if (this.elapsed >= this.timer || player != null && !player.dead && player.oldControlStates['use'] && !player.controlStates['use']) {
+        if (this.elapsed >= this.timer || player != null && !player.dead && player.oldControlStates['use']
+            && !player.controlStates['use']) {
             if (this.elapsed < 250) { //cancel the attachment if player releases early
                 this.player = null;
                 return
@@ -359,35 +358,36 @@ export class LiveGrenade extends Entity {
                 this.dead = true;
                 return;
             }
-            for (let t of game.tiles.iterRange(t0, this.radius))
+            for (let t of game.tiles.iterRange(t0, this.radius)) {
                 game.items.push(new Boom(t));
+            }
             for (let p of game.monsters_and_players()) {
                 let d = t0.dist(p.pos); //TODO: This doesn't necessarily align center of player with center of rocket (ideally update pos for grenade/rocket bounds to save on expensive calcs)
                 if (d <= this.radius) {
-                    d = Math.max(0.1,d);
-                    p.hit(game, this.damage*(1+(d<=0.5?1:0)));
-                    p.stun(500*this.damage);
+                    d = Math.max(0.1, d);
+                    p.hit(game, this.damage * (1 + (d <= 0.5 ? 1 : 0)));
+                    p.stun(500 * this.damage);
                     let dx = p.pos.x - t0.x;
                     let dy = p.pos.y - (t0.y + 1);
-                    let power = 1/1600 + (this.radius-d)/3200;
-                    p.vel.x += power*(dx/d);
-                    p.vel.y += power*(dy/d);
+                    let power = 1 / 1600 + (this.radius - d) / 3200;
+                    p.vel.x += power * (dx / d);
+                    p.vel.y += power * (dy / d);
                     p.falling = true;
                 }
             }
             this.dead = true;
             game.playSound('boom');
             //TODO: base intensity on distance from EACH player
-            for(let p of game.activePlayers) {
-                if(!p.dead) {
-                    p.controller.vibrate(0.5,0.5,250);
+            for (let p of game.activePlayers) {
+                if (!p.dead) {
+                    p.controller.vibrate(0.5, 0.5, 250);
                 }
             }
         }
         // if (this.falling)
-            // this.vel.y = Math.min(1.0 / 50, this.vel.y + 1.0 / 3200 * millis / 15);
+        // this.vel.y = Math.min(1.0 / 50, this.vel.y + 1.0 / 3200 * millis / 15);
         // else
-        this.vel.x *= 0.9/(millis/15); //slow with friction on the ground
+        this.vel.x *= 0.9 / (millis / 15); //slow with friction on the ground
         if (this.canFall) {
             this.falling = true;
             for (let t of game.tiles.contacters(this.bounds()))
@@ -398,15 +398,14 @@ export class LiveGrenade extends Entity {
         }
         let old_vely = this.vel.y;
         let old_velx = this.vel.x;
-        game.tiles.move(this, millis); //TODO: there are some weird edge cases here when the collision involves diagonal moves (or large moves)
-        if (this.vel.x == 0 && this.falling)
-            this.vel.x = -old_velx / (2*millis/15);
-        if (Math.abs(this.vel.x) < 1.0 / 3200) //stop if hitting a wall at slow speed
-            this.vel.x = 0;
-        if (this.vel.y == 0 && old_vely > 1.0 / 3200) //bounce unless going really slowly
-            this.vel.y = -old_vely / (3*millis/15);
-        if (this.pos.x <= -1 || this.pos.x >= game.tiles.dimW)
-            this.vel.x = 0;
+        //TODO: there are some weird edge cases here when the collision involves diagonal moves (or large moves)
+        game.tiles.move(this, millis);
+        if (this.vel.x == 0 && this.falling) this.vel.x = -old_velx / (2 * millis / 15);
+        //stop if hitting a wall at slow speed
+        if (Math.abs(this.vel.x) < 1.0 / 3200) this.vel.x = 0;
+        //bounce unless going really slowly
+        if (this.vel.y == 0 && old_vely > 1.0 / 3200) this.vel.y = -old_vely / (3 * millis / 15);
+        if (this.pos.x <= -1 || this.pos.x >= game.tiles.dimW) this.vel.x = 0;
     }
 }
 
@@ -420,14 +419,14 @@ export class ShotFrags extends Entity {
         this.player = player;
         this.pos = new Vec2(player.pos);
         this.facing = facing;
-        this.pos.x += 1 + 0.2 * facing * (angle == 90?1:0); // + 0.5*Math.cos(Math.PI*angle/180);
+        this.pos.x += 1 + 0.2 * facing * (angle == 90 ? 1 : 0); // + 0.5*Math.cos(Math.PI*angle/180);
         this.pos.y += -0.5; // + 0.5*Math.sin(Math.PI*angle/180);
-        this.angle = angle - 180*(facing<0?1:0);
+        this.angle = angle - 180 * (facing < 0 ? 1 : 0);
         this.boundingBox = null;
-        this.boundingBoxes = [this.rotatedBoundingBox([-0.5,1], this.angle, this.facing<0, [0.5,1],[1,1]),
-                                this.rotatedBoundingBox([-0.5,1], this.angle, this.facing<0, [1.5,0.5],[1,1]),
-                                this.rotatedBoundingBox([-0.5,1], this.angle, this.facing<0, [1.5,1.5],[1,1]),
-            ];
+        this.boundingBoxes = [this.rotatedBoundingBox([-0.5, 1], this.angle, this.facing < 0, [0.5, 1], [1, 1]),
+        this.rotatedBoundingBox([-0.5, 1], this.angle, this.facing < 0, [1.5, 0.5], [1, 1]),
+        this.rotatedBoundingBox([-0.5, 1], this.angle, this.facing < 0, [1.5, 1.5], [1, 1]),
+        ];
         this.shotDamage = shotDamage;
         this.elapsed = 0;
         this.timer = 100;
@@ -438,8 +437,8 @@ export class ShotFrags extends Entity {
         if (this.elapsed == 0) {
             let monsters = game.monsters_with_other_players(this.player);
             for (let m of monsters) {
-                for(let b of this.boundingBoxes) {
-                    if(!m.dead && this.bounds(this.pos, b).collide(m.hitBounds())) {
+                for (let b of this.boundingBoxes) {
+                    if (!m.dead && this.bounds(this.pos, b).collide(m.hitBounds())) {
                         m.hit(game, this.shotDamage);
                         break;
                     }
@@ -454,8 +453,8 @@ export class ShotFrags extends Entity {
     }
     /**@type {Entity['draw']} */
     draw(game) {
-        if (this.sprite.length===4) {
-            game.sprites.entitiesItems.drawRotatedMultitile(this.sprite, this.getDisplayX(), this.getDisplayY(), this.angle, this.facing < 0, [-0.5,1]); 
+        if (this.sprite.length === 4) {
+            game.sprites.entitiesItems.drawRotatedMultitile(this.sprite, this.getDisplayX(), this.getDisplayY(), this.angle, this.facing < 0, [-0.5, 1]);
         }
     }
 }
@@ -499,10 +498,8 @@ export class LiveRocket extends Entity {
         } else {
             // check for a collision
             let collision = false;
-            if (this.vel.x == 0 && old_velx != 0)
-                collision = true;
-            if (this.vel.y == 0 && old_vely != 0)
-                collision = true;
+            if (this.vel.x == 0 && old_velx != 0) collision = true;
+            if (this.vel.y == 0 && old_vely != 0) collision = true;
             let monsters = game.monsters_with_other_players(this.player);
             for (let m of monsters) {
                 if (m.hitBounds().collide(this.bounds())) {
@@ -516,9 +513,9 @@ export class LiveRocket extends Entity {
                 let t0 = game.tiles.closestTile(this.bounds());
                 game.playSound('boomBig');
                 //TODO: base intensity on distance from EACH player
-                for(let p of game.activePlayers) {
-                    if(!p.dead) {
-                        p.controller.vibrate(1.0,1.0,350);
+                for (let p of game.activePlayers) {
+                    if (!p.dead) {
+                        p.controller.vibrate(1.0, 1.0, 350);
                     }
                 }
                 for (let t of game.tiles.iterRange(t0, this.radius)) {
@@ -527,14 +524,14 @@ export class LiveRocket extends Entity {
                 for (let p of game.monsters_and_players()) {
                     let d = this.pos.dist(p.pos);
                     if (d <= this.radius) {
-                        d = Math.max(0.1,d);
-                        p.hit(game, this.damage*(1+(d<=0.5?1:0)));
-                        p.stun(500*this.damage);
+                        d = Math.max(0.1, d);
+                        p.hit(game, this.damage * (1 + (d <= 0.5 ? 1 : 0)));
+                        p.stun(500 * this.damage);
                         let dx = p.pos.x - this.pos.x;
                         let dy = p.pos.y - (this.pos.y + 1);
-                        let power = 1/1600 + (this.radius-d)/3200;
-                        p.vel.x += power*(dx/d);
-                        p.vel.y += power*(dy/d);
+                        let power = 1 / 1600 + (this.radius - d) / 3200;
+                        p.vel.x += power * (dx / d);
+                        p.vel.y += power * (dy / d);
                         p.falling = true;
                     }
                 }
@@ -545,7 +542,7 @@ export class LiveRocket extends Entity {
     }
     /**@type {Entity['draw']} */
     draw(game) {
-        if (this.sprite.length===2) {
+        if (this.sprite.length === 2) {
             game.sprites.entitiesItems.drawRotated(this.sprite, this.getDisplayX(), this.getDisplayY(), this.angle, this.facing < 0);
         }
     }
@@ -574,8 +571,8 @@ export class LiveDrone extends Entity {
         // * out of bounds
         // * runs out of flight time
         // * player dies, exits level, releases use button
-        if (player.activeState!=player.states.driving) {
-            this.dead=true;
+        if (player.activeState != player.states.driving) {
+            this.dead = true;
             return;
         }
         if (this.elapsed > this.timer || !player.controlStates['use'] || player.dead
@@ -583,7 +580,7 @@ export class LiveDrone extends Entity {
             || this.pos.x < -4 || this.pos.x > game.dimW + 4) {
             this.inventoryItem.live = false;
             player.setState(player.states.falling);
-            this.dead=true;
+            this.dead = true;
             return;
         }
 
@@ -602,7 +599,8 @@ export class LiveDrone extends Entity {
             this.vel.x = Math.min(1.0 / 50, this.vel.x + 1.0 / 3200 * millis / 15);
         }
         //TODO: Maybe more fun if you can't stop it! Comment below out if so.
-        if (!player.controlStates['left'] && !player.controlStates['right'] && !player.controlStates['up'] && !player.controlStates['down']) {
+        if (!player.controlStates['left'] && !player.controlStates['right']
+            && !player.controlStates['up'] && !player.controlStates['down']) {
             this.vel.x = this.vel.y = 0;
         }
 
@@ -615,10 +613,8 @@ export class LiveDrone extends Entity {
 
         // check for a collision -- TODO: bounce if going slowly enough
         let collision = false;
-        if (this.vel.x == 0 && old_velx != 0)
-            collision = true;
-        if (this.vel.y == 0 && old_vely != 0)
-            collision = true;
+        if (this.vel.x == 0 && old_velx != 0) collision = true;
+        if (this.vel.y == 0 && old_vely != 0) collision = true;
         for (let m of game.monsters) {
             if (m.hitBounds().collide(this.bounds())) {
                 collision = true;
@@ -637,7 +633,7 @@ export class LiveDrone extends Entity {
                     m.hit(game, this.damage);
                 }
             }
-            player.controller.vibrate(0.2,0.2,100);
+            player.controller.vibrate(0.2, 0.2, 100);
             this.inventoryItem.live = false;
             this.inventoryItem.lastBuildTime = 0;
             this.dead = true;
@@ -653,11 +649,11 @@ export class SaberStrike extends Entity {
         super(null, entityItemIds.LiveVibroBlade);
         this.angle = angle;
         this.facing = facing;
-        this.pos = new Vec2([pos.x+0.75, pos.y]); // + 0.5 * Math.sin(Math.PI * angle / 180)
+        this.pos = new Vec2([pos.x + 0.75, pos.y]); // + 0.5 * Math.sin(Math.PI * angle / 180)
         this.angle -= facing < 0 ? 180 : 0;
         this.elapsed = 0;
         this.lifeTime = 100;
-//        this.boundingBox = new Rect([0,0.25,0.75,0.5])
+        //        this.boundingBox = new Rect([0,0.25,0.75,0.5])
         this.boundingBox = this.rotatedBoundingBox([-0.25, 0.5]);
     }
     /**@type {Entity['update']} */
@@ -673,7 +669,7 @@ export class SaberStrike extends Entity {
     }
     /**@type {Entity['draw']} */
     draw(game) {
-        if (this.sprite.length===2) {
+        if (this.sprite.length === 2) {
             game.sprites.entitiesItems.drawRotated(this.sprite, this.getDisplayX(), this.getDisplayY(), this.angle, this.facing < 0, [-0.25, 0.5]);
         }
     }
@@ -707,8 +703,8 @@ export class TrapBlade extends Entity {
         super(null, entityItemIds.TrapBlade);
         this.platform = platform;
         this.triggered = false;
-        if(platform.type == 'static') {
-            this.pos = new Vec2(this.platform.shift([0,-1]));
+        if (platform.type == 'static') {
+            this.pos = new Vec2(this.platform.shift([0, -1]));
         } else {
             this.pos = new Vec2(this.platform);
         }
@@ -719,45 +715,45 @@ export class TrapBlade extends Entity {
     /**@type {Entity['update']} */
     update(game, millis) {
         let plat = this.platform;
-        if(game.tiles.at(plat.pos)!=plat) {
-            this.dead=true;
+        if (game.tiles.at(plat.pos) != plat) {
+            this.dead = true;
         }
-        this.elapsed+=millis;
-        if(plat.type=='contact') {
-            if(this.pos.y==plat.y && this.vel.y==0) { 
-                for(let pl of game.activePlayers) {
-                    if(pl.bounds().collide(game.tiles.at(plat).shift([0,-1]))) {
-                        this.vel.y = -1.0/plat.extendTime;
+        this.elapsed += millis;
+        if (plat.type == 'contact') {
+            if (this.pos.y == plat.y && this.vel.y == 0) {
+                for (let pl of game.activePlayers) {
+                    if (pl.bounds().collide(game.tiles.at(plat).shift([0, -1]))) {
+                        this.vel.y = -1.0 / plat.extendTime;
                         this.elapsed = 0;
                         break;
                     }
-                }    
-            } else if(this.pos.y==plat.y-1 && this.elapsed>=plat.extendedTime) {
-                this.vel.y = 1.0/plat.extendTime;
+                }
+            } else if (this.pos.y == plat.y - 1 && this.elapsed >= plat.extendedTime) {
+                this.vel.y = 1.0 / plat.extendTime;
                 this.elapsed = 0;
             }
-        } else if(plat.type=='cycling') {
-            if(this.pos.y==plat.y-1 && this.elapsed>=plat.extendedTime) {
-                this.vel.y = 1.0/plat.extendTime;
+        } else if (plat.type == 'cycling') {
+            if (this.pos.y == plat.y - 1 && this.elapsed >= plat.extendedTime) {
+                this.vel.y = 1.0 / plat.extendTime;
                 this.elapsed = 0;
-            }    
-            if(this.pos.y==plat.y && this.elapsed>=plat.retractedTime) {
-                this.vel.y = -1.0/plat.extendTime;
+            }
+            if (this.pos.y == plat.y && this.elapsed >= plat.retractedTime) {
+                this.vel.y = -1.0 / plat.extendTime;
                 this.elapsed = 0;
             }
 
         }
-        for(let pl of game.monsters_and_players()) {
-            if(this.bounds().collide(pl.bounds())) {
+        for (let pl of game.monsters_and_players()) {
+            if (this.bounds().collide(pl.bounds())) {
                 pl.hit(plat.damage, 1);
-                if(!pl.isPlayer) {
+                if (!pl.isPlayer) {
                     pl.stun(500);
                 }
             }
         }
-        let vel = this.elapsed>plat.contactDelay || plat.type!=='contact'?this.vel.y:0;
-        this.pos.y = Math.min(Math.max(this.pos.y+vel*millis, plat.y-1),plat.y);
-        if(this.pos.y==plat.y-1 && this.vel.y<0|| this.pos.y==plat.y && this.vel.y>0) {
+        let vel = this.elapsed > plat.contactDelay || plat.type !== 'contact' ? this.vel.y : 0;
+        this.pos.y = Math.min(Math.max(this.pos.y + vel * millis, plat.y - 1), plat.y);
+        if (this.pos.y == plat.y - 1 && this.vel.y < 0 || this.pos.y == plat.y && this.vel.y > 0) {
             this.vel.y = 0;
         }
     }
@@ -766,7 +762,7 @@ export class TrapBlade extends Entity {
      * @param {Game} game 
      */
     drawAsTile(game) {
-        if (this.sprite.length===2) {
+        if (this.sprite.length === 2) {
             game.sprites.entitiesItems.draw(this.sprite, this.getDisplayX(), this.getDisplayY(), this.getFlipped());
         }
     }
