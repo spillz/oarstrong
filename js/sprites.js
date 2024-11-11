@@ -174,6 +174,7 @@ export const baseSetIds = {
     PlayerCharacter3: [12,6],
     PlayerCharacter4: [13,6],
     Slash: [10,7],
+    Strike: [10,7],
 }
 
 /**@type {{[id:string]:[number,number,number,number]}} */

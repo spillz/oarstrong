@@ -1,5 +1,7 @@
 //@ts-check
 import { rightPad } from "./util.js";
+/**@typedef {import('./game').Game} Game */
+
 
 export function getScores(){
     if(localStorage["best_runs"]){
@@ -19,46 +21,29 @@ export function addScore(game, score, won){
     }
 }
 
+/**
+ * 
+ * @param {Game} game 
+ */
 export function drawScores(game){
-    if(!game.competitiveMode) {
-        let scores = getScores();
-        if(scores.length){
-            game.drawText(
-                rightPad(["LEVEL","SCORE","END"]),
-                18,
-                true,
-                game.canvas.height/2,
-                "white"
-            );
-
-            let newestScore = scores.pop();
-            scores.sort(function(a,b){
-                return b.score - a.score;
-            });
-            scores.unshift(newestScore);
-
-            for(let i=0;i<Math.min(10,scores.length);i++){
-                let scoreText = rightPad([scores[i].level, scores[i].score, scores[i].won? "ESCAPED":"DIED"]);
-                game.drawText(
-                    scoreText,
-                    18,
-                    true,
-                    game.canvas.height/2 + 24+i*24,
-                    i == 0 ? "DarkOrange" : "DarkSeaGreen"
-                );
-            }
-        }
-    } else
-    {
+    let scores = getScores();
+    if(scores.length){
         game.drawText(
-            rightPad(["PLAYER","SCORE","DEATHS"]),
+            rightPad(["LEVEL","SCORE","END"]),
             18,
             true,
             game.canvas.height/2,
             "white"
         );
-        for(let i=0;i<game.activePlayers.length;i++){
-            let scoreText = rightPad([i, game.activePlayers[i].score, game.activePlayers[i].deaths]);
+
+        let newestScore = scores.pop();
+        scores.sort(function(a,b){
+            return b.score - a.score;
+        });
+        scores.unshift(newestScore);
+
+        for(let i=0;i<Math.min(10,scores.length);i++){
+            let scoreText = rightPad([scores[i].level, scores[i].score, scores[i].won? "ESCAPED":"DIED"]);
             game.drawText(
                 scoreText,
                 18,

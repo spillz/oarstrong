@@ -229,7 +229,7 @@ export class Monster extends Entity {
         if(!stunned) {
             for(let player of game.activePlayers)
                 if(player.hitBounds().collide(this.bounds())) {
-                    player.hit(game, this.hitDamage*(this.stance!=='passive'?1:0),this.hitDamage*(this.pos.x<player.pos.x?1:-1));
+                    player.hitFrom(game, this.pos, this.hitDamage, this.hitDamage);
                     player.stun(500*this.hitDamage);
                 }
         }
@@ -242,21 +242,27 @@ export class Monster extends Entity {
 
     /**
      * 
-     * @param {Game} game 
+     * @param {Game} game
+     * @param {Vec2} pos 
      * @param {number} damage 
      * @param {number} knockbackScale 
      */
-    hit(game, damage, knockbackScale=0){
+    hitFrom(game, pos, damage, knockbackScale=0) {
         //TODO: eventually need to add type of damage
 //        if(this.shield>0){           
 //            return;                                                             
 //        }
         this.hp -= damage;
         if(damage>0) this.hitTimer.reset(200);
-        if(this.hp <= 0)
-            this.die(game);
-        this.vel.y=-1.0/400;
-        this.vel.x = knockbackScale*1.0/200;
+        if(this.hp <= 0) this.die(game);
+
+        const dist = this.pos.dist(pos);
+        if(dist>0) {
+            const delta = this.pos.add(pos.scale(-1)).scale(1/dist);
+
+            this.vel.x = knockbackScale*1.0/200*delta[0];
+            this.vel.y = knockbackScale*1.0/200*delta[1];    
+        }
         this.falling = true;
 //TODO: Move this to player
 //         if(this instanceof Player){
@@ -308,10 +314,10 @@ export class Monster extends Entity {
                 game.items.push(new Boom(t));
         for(let m of game.monsters)
             if(this.pos.dist(m.pos)<=radius)
-                m.hit(game, this.hitDamage*3);
+                m.hitFrom(game, this.pos, this.hitDamage*3);
         for(let player of game.activePlayers)
             if(this.pos.dist(player.pos)<=radius)
-                player.hit(game, this.hitDamage*3);
+                player.hitFrom(game, this.pos, this.hitDamage*3);
     }
 }
 
@@ -350,4 +356,3 @@ export class Jelly extends Monster {
     }
 
 }
-

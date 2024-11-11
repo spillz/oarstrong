@@ -1,6 +1,6 @@
 //@ts-check
 
-import { choose, getRandomInt, Rect, shuffle } from "./util";
+import { choose, Rect, Vec2 } from "./util";
 import { baseSetIds, tileIds } from "./sprites";
 import { InventoryItem } from "./inventory";
 import { Entity } from "./entity";
@@ -71,10 +71,11 @@ export class Tile extends Rect {
     /**
      * 
      * @param {Game} game 
+     * @param {Vec2} pos 
      * @param {number} damage 
      * @param {string} type 
      */
-    hit(game, damage, type) {
+    hitFrom(game, pos, damage, type) {
     }
 }
 

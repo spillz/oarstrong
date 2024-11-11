@@ -239,13 +239,13 @@ export class Fist extends InventoryItem {
                 m.facing = player.facing;
                 m.falling = true;
                 m.stun(this.stunTime);
-                m.hit(game, this.hitDamage, player.facing*this.hitPower);
+                m.hitFrom(game, player.pos, this.hitDamage, this.hitPower);
                 player.controller.vibrate(0.3,0.5,75);
                 this.elapsed = 0;
                 return; //only get to hit one monster
             }
         }
-        game.tiles.closestTile(b).hit(game, 0.5, 'blunt');
+        game.tiles.closestTile(b).hitFrom(game, player.pos, 0.5, 'blunt');
     }
 }
 
@@ -836,13 +836,13 @@ export class PowerSaber extends InventoryItem { //hit multiple enemies, longer r
                     m.facing = player.facing;
                     m.falling = true;
                     m.stun(this.stunTime);
-                    m.hit(game, hitDamage, player.facing*this.hitPower);
+                    m.hitFrom(game, player.pos, hitDamage, this.hitPower);
                     player.controller.vibrate(0.5,0.5,100);
                     hit = true;
                 }
             }
             if(!hit) {
-                game.tiles.closestTile(strike.bounds()).hit(hitDamage, 'cut');
+                game.tiles.closestTile(strike.bounds()).hitFrom(game, player.pos, hitDamage, 'cut');
             }
             // this.sound.pause();
             this.charged = false;

@@ -10,164 +10,6 @@ import { Void } from "./tile";
 /**@typedef {import('./game').Game} Game */
 
 
-// class Walking extends Behavior { //Walking/running
-//     update(player, millis) {
-//         player.runCheck(millis);
-//         player.entityInteract();
-//         if(player.stunTimer.finished()) {
-//             player.walkCheck(millis, player.running);
-//             player.cycleInventoryCheck(millis);
-//         }
-//         if(!player.aiming) {
-//             player.tileInteract(millis)
-//             if(player.activeState!=this)
-//                 return;
-//         }
-//         player.jumpCheck(millis);
-    
-//         if(player.fallCheck()) player.setState(player.states.falling);
-//     }
-
-// }
-
-// class Falling  extends Behavior { //In midair (rising or falling), fixed gravity, direction changes allowed
-//     entry(player) {
-//         this.fromJump = !player.controlStates['jump'];
-//         this.initialFacing = player.facing;
-//     }
-
-//     exit(player) {
-//     }
-
-//     update(player, millis) {
-//         if(player.stunTimer.finished()) {
-//             player.entityInteract();
-//             let fast = this.initialFacing==player.facing && player.running;
-//             if(!fast) player.running=false;
-
-//             if(player.stunTimer.finished()) {
-//                 player.walkCheck(millis, fast);
-//                 player.cycleInventoryCheck(millis);
-//             }
-                
-//             // jump
-//             if(this.fromJump && player.stateTimer.elapsed<100) {
-//                 player.jumpCheck(millis);
-//             }
-
-//             // Tile interactions pressing up/down
-//             player.tileInteract(millis);
-
-//         }
-
-//         if(!player.jumpTimer.finished() && player.vel.y<0 && !player.controlStates['jump']) { //Kill the jump for early release
-//             player.vel.y *= 0.5 ** (millis/15);
-//         }
-
-//         // check we are still falling
-//         if(!player.fallCheck()) {
-//         //Vibrate -- hard coding velocity threshold
-//             if(Math.abs(player.vel.y)>0.01 && player.vel.y==0) {
-//                 player.controller.vibrate(20*Math.abs(player.vel.y),20*Math.abs(player.vel.y),50);
-//             }
-//             player.vel.y = 0;
-//             player.setState(player.states.walking);
-//             return;
-//         } 
-//         if(player.vel.y>=0) { //check if falling onto a ledge
-//             for(let tbelow of game.tiles.contacters(player.bounds())) {
-//                 if(tbelow.standable && game.tiles.above(tbelow).passable && !game.tiles.above(tbelow).climbable) {
-//                     let ycut = player.bounds().bottom
-//                     if(ycut>tbelow.y && ycut - player.vel.y*millis<=tbelow.y) {
-//                         player.pos.y -= ycut - tbelow.y;
-//                         player.vel.y = 0;
-//                         player.setState(player.states.walking);
-//                         return;
-//                     }
-//                 }
-//             }
-//         }
-//         // gravity
-//         player.vel.y = Math.min(player.maxFallSpeed, player.vel.y + 1.0/4800*millis/15);
-//     }
-
-// }
-
-// class Climbing extends Behavior { //Climbing ladders, trees etc.
-//     update(player, millis) {
-//         if(!player.stunTimer.finished()) { //fall off climbable if stunned
-//             player.setState(player.states.falling);
-//             return;
-//         }
-
-//         player.entityInteract();
-
-//         if(player.controlStates['up']) player.vel.y = -player.topSpeed*0.75;
-//         else if(player.controlStates['down']) player.vel.y = player.topSpeed*0.75;
-//         else player.vel.y = 0;
-
-//         if(player.stunTimer.finished()) {
-//             player.walkCheck(millis);
-//             player.cycleInventoryCheck(millis);
-//             player.jumpCheck(millis);
-//         }
-
-//         let on_a_climbable=false;
-//         for(let t of game.tiles.colliders(player.bounds())) {
-//             if(t.climbable) {
-//                 on_a_climbable = true;
-//                 break;
-//             }
-//         }
-//         if(!on_a_climbable) {
-//             if(player.fallCheck(millis)) player.setState(player.states.falling);
-//             else player.setState(player.states.walking);
-//         }
-    
-//     }
-
-// }
-
-// class Driving extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
-//     entry(player) {
-//         this.vehicle = null; //controlling entity
-//     }
-//     update(player, millis) {
-//         player.entityInteract();
-
-//     }
-
-// }
-
-// class Dead extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
-//     entry(player) {
-//         player.dead = true;
-//     }
-//     exit(player) {
-//         player.dead = false;
-//     }
-//     update(player, millis) {
-//         //friction
-//         if(player.vel.y==0) player.vel.x *= 0.95**(millis/15);
-//         // gravity
-//         player.vel.y = Math.min(player.maxFallSpeed, player.vel.y + 1.0/4800*millis/15);
-//     }
-
-// }
-
-// class Escaped extends Behavior { //ignoring controls until notified otherwise -- delegates control to another entity
-//     entry(player) {
-//         player.escaped = true;
-//     }
-//     exit(player) {
-//         player.escaped = false;
-//     }
-//     update(player, millis) {
-
-//     }
-
-// }
-
 //Motion states
 const STATE_WALK  = 0;
 const STATE_STUN  = 1;
@@ -212,7 +54,7 @@ export class Player extends Monster {
 
     //Animation Attributes
     lastFacing = 0;
-    lastFramePos = 0;
+    lastFramePos = new Vec2([0,0]);
     currentFrame = 0;
     useTimer = new Timer(0);
 
@@ -239,7 +81,6 @@ export class Player extends Monster {
         this.newControlStates = {...initializeControlStates()};
         /**@type {ReturnType<initializeControlStates>} */
         this.oldControlStates = {...initializeControlStates()};
-        
         
         this.sprite = /**@type {[number, number]} */([0,0]);
         this.setWalkFrames();
@@ -392,13 +233,13 @@ export class Player extends Monster {
         this.hp = game.competitiveMode?this.maxHp:1;
     }
 
-    /**@type {Monster['hit']} */
-    hit(game, damage, knockbackScale=0) {
+    /**@type {Monster['hitFrom']} */
+    hitFrom(game, pos, damage, knockbackScale=0) {
         if(!this.dead && !this.escaped && this.immunityTimer.finished()) {
             for(let i of this.hookHitModifier) {
                 [damage, knockbackScale] = i.hitModifier(damage, knockbackScale);
             }
-            super.hit(game, damage, knockbackScale);
+            super.hitFrom(game, pos, damage, knockbackScale);
             this.immunityTimer.reset();
             game.playSound("hit1");                                              
         }
@@ -421,30 +262,30 @@ export class Player extends Monster {
         if(this.dead) {
             sprite = [1, this.sprite[1]];
             this.currentFrame = 0;
-            this.lastFramePos = this.pos.x;
+            this.lastFramePos = new Vec2(this.pos);
         }
         else if(!this.useTimer.finished()) {
             sprite = [4, this.sprite[1]];
             this.currentFrame = 0;
-            this.lastFramePos = this.pos.x;
+            this.lastFramePos = new Vec2(this.pos);
         }
         else if(this.activeState===STATE_STUN) {
             sprite = [4, this.sprite[1]];
             this.currentFrame = 0;
-            this.lastFramePos = this.pos.x;
+            this.lastFramePos = new Vec2(this.pos);
         }
         else if(this.vel.x===0) {
             sprite = [0, this.sprite[1]];
             this.currentFrame = 0;
-            this.lastFramePos = this.pos.x;
+            this.lastFramePos = new Vec2(this.pos);
         }
         else {
             if(this.facing!==this.lastFacing) {
                 this.currentFrame = 0;
-                this.lastFramePos = this.pos.x;
-            } else if(this.facing*(this.pos.x-this.lastFramePos)*8>=1) {
-                this.currentFrame+=Math.floor(this.facing*(this.pos.x-this.lastFramePos)*8);
-                this.lastFramePos = this.pos.x;
+                this.lastFramePos = new Vec2(this.pos);
+            } else if(this.pos.dist(this.lastFramePos)*8>=1) {
+                this.currentFrame+=Math.floor(this.pos.dist(this.lastFramePos)*8);
+                this.lastFramePos = new Vec2(this.pos);
             }
             this.currentFrame = this.currentFrame%this.walkFrames.length;
             sprite = this.walkFrames[this.currentFrame];
