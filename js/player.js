@@ -129,7 +129,19 @@ export class Player extends Monster {
      * @param {number} state 
      */
     enterState(game, state) {
-
+        switch (state) {
+            case STATE_DASH:
+                if (this.vel.x>0) this.vel.x = 1/50;
+                if (this.vel.x<0) this.vel.x = -1/50;
+                if (this.vel.y>0) this.vel.y = 1/50;
+                if (this.vel.y<0) this.vel.y = -1/50;
+                const v = this.vel.dist([0, 0]);
+                if (v>0) {
+                    this.vel = this.vel.scale(1 / 50 / v);
+                }
+                break;
+        }
+        this.activeState = state;
     }
 
     /**
@@ -155,6 +167,10 @@ export class Player extends Monster {
                 if (this.stunTimer.finished()) {
                     this.walkCheck(game, millis, this.running);
                     this.cycleInventoryCheck(game, millis);
+                }
+                if (!this.oldControlStates['jump'] && this.controlStates['jump'] 
+                    && (this.vel.x!==0 || this.vel.y!==0)) {
+                    this.setState(game, STATE_DASH);
                 }
                 if (!this.aiming) {
                     this.tileInteract(game, millis)
@@ -187,7 +203,6 @@ export class Player extends Monster {
                 if (!this.jumpTimer.finished() && this.vel.y < 0 && !this.controlStates['jump']) { //Kill the jump for early release
                     this.vel.y *= 0.5 ** (millis / 15);
                 }
-
                 // check we are still falling
                 if (!this.fallCheck()) {
                     //Vibrate -- hard coding velocity threshold
@@ -215,6 +230,10 @@ export class Player extends Monster {
                 this.vel.y = Math.min(this.maxFallSpeed, this.vel.y + 1.0 / 4800 * millis / 15);
                 break;
             case STATE_DASH:
+                this.entityInteract(game);
+                if (this.stateTimer.elapsed>100) {
+                    this.setState(game, STATE_STAND);
+                }
                 break;
             case STATE_DODGE:
                 break;
