@@ -148,6 +148,12 @@ export class GamepadController extends Controller {
         this.thresh = 0.2;
         this.internalStates = { ... this.controlStates };
     }
+    /**
+     * 
+     * @param {keyof ControlStatesType} action 
+     * @param {boolean} state 
+     * @returns 
+     */
     set(action, state = true) {
         if (this.internalStates[action] == state)
             return;
@@ -180,6 +186,7 @@ export class GamepadController extends Controller {
 }
 
 export class GamepadManager {
+    /**@type {{[id:number]:GamepadController}} */
     gamepads = {};
     /**
      * 
@@ -211,11 +218,11 @@ export class GamepadManager {
                 continue;
             let c = this.gamepads[g.index];
             c.gamepad = g; //put the latest state in the gamepad object
-            c.set("jump", this.buttonPressed(g.buttons[0]));
+            c.set("dash", this.buttonPressed(g.buttons[0]));
             c.set("cycle", this.buttonPressed(g.buttons[1]) || this.buttonPressed(g.buttons[6]));
             c.set("use", this.buttonPressed(g.buttons[2]) || this.buttonPressed(g.buttons[7]));
-            c.set("door", this.buttonPressed(g.buttons[3]) || this.buttonPressed(g.buttons[4]));
-            c.set("run", this.buttonPressed(g.buttons[5]));
+            // c.set("door", this.buttonPressed(g.buttons[3]) || this.buttonPressed(g.buttons[4]));
+            c.set("dodge", this.buttonPressed(g.buttons[5]));
             c.set("camera", this.buttonPressed(g.buttons[12]));
             c.set("menu", this.buttonPressed(g.buttons[9]));
             c.set("left", g.axes[0] < -c.thresh && (g.axes[0] < -0.5 * Math.abs(g.axes[1])));
