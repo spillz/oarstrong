@@ -2,23 +2,25 @@
 
 import { choose, Rect, Vec2 } from "./util";
 import { baseSetIds, tileIds } from "./sprites";
-import { InventoryItem } from "./inventory";
-import { Entity } from "./entity";
-import { TrapBlade } from "./entity_items";
-import { Player } from "./player";
+import { KioskPickup } from "./kioskitems";
+/**@typedef {import('./entity').Entity} Entity */
+/**@typedef {import('./inventory').InventoryItem} InventoryItem */
+/**@typedef {import('./player').Player} Player */
 /**@typedef {import('./game').Game} Game */
+
+/**@typedef {Vec2|[number,number]|number[]} VecLike */
+
 
 export class Tile extends Rect {
     /**
      * 
-     * @param {number} x 
-     * @param {number} y 
+     * @param {VecLike} pos 
      * @param {[number, number]} sprite 
      * @param {boolean} passable 
      * @param {boolean} climbable 
      */
-    constructor(x, y, sprite = null, passable = true, climbable = false) {
-        super([x, y, 1, 1])
+    constructor(pos, sprite = null, passable = true, climbable = false) {
+        super([pos[0], pos[1], 1, 1])
         /**@type {[number,number]} */
         this.sprite = sprite;
         /**@type {boolean} */
@@ -57,6 +59,14 @@ export class Tile extends Rect {
     /**
      * 
      * @param {Game} game 
+     * @param {Player} player 
+     * @param {string} action 
+     */
+    playerInteract(game, player, action) {
+    }
+    /**
+     * 
+     * @param {Game} game 
      * @param {Entity} entity 
      * @param {string} action 
      */
@@ -80,36 +90,56 @@ export class Tile extends Rect {
 }
 
 export class Void extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite = null) {
-        super(pos[0], pos[1], sprite, true, false);
+        super(pos, sprite, true, false);
     };
 
 }
 
 export class BeachLower extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite = null) {
         if (sprite == null) {
             sprite = baseSetIds.BeachLower;
         }
-        super(pos[0], pos[1], sprite, true, false);
+        super(pos, sprite, true, false);
     };
 }
 
 export class BeachUpper extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite = null) {
         if (sprite == null) {
             sprite = baseSetIds.BeachUpper;
         }
-        super(pos[0], pos[1], sprite, true, false);
+        super(pos, sprite, true, false);
     };
 }
 
 export class WaterShallow extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite = null) {
         if (sprite == null) {
             sprite = baseSetIds.BeachLower;
         }
-        super(pos[0], pos[1], sprite, true, false);
+        super(pos, sprite, true, false);
     }
     draw(game) {
         super.draw(game);
@@ -118,11 +148,16 @@ export class WaterShallow extends Tile {
 }
 
 export class WaterDeep extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite = null) {
         if (sprite == null) {
             sprite = baseSetIds.BeachLower;
         }
-        super(pos[0], pos[1], sprite, true, false);
+        super(pos, sprite, true, false);
     }
     draw(game) {
         super.draw(game);
@@ -132,20 +167,30 @@ export class WaterDeep extends Tile {
 }
 
 export class Floor extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite = null) {
         if (sprite == null) {
             sprite = tileIds.Floor;
         }
-        super(pos[0], pos[1], sprite, true, false);
+        super(pos, sprite, true, false);
     };
 }
 
 export class Wall extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite = null) {
         if (sprite == null) {
             sprite = tileIds.Wall;
         }
-        super(pos[0], pos[1], sprite, false, false);
+        super(pos, sprite, false, false);
     }
     bounds() {
         return new Rect([this.x, this.y, 1, 0.25]);
@@ -153,8 +198,12 @@ export class Wall extends Tile {
 }
 
 export class Ledge extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     */
     constructor(pos) {
-        super(pos[0], pos[1], tileIds.Ledge, true, false);
+        super(pos, tileIds.Ledge, true, false);
     };
     get standable() {
         return true;
@@ -162,29 +211,30 @@ export class Ledge extends Tile {
 }
 
 export class Entrance extends Floor {
+    /**
+     * 
+     * @param {VecLike} pos 
+     */
     constructor(pos) {
         super(pos);
     }
-    /**
-     * 
-     * @param {Game} game 
-     * @param {Entity} entity 
-     * @param {string} action 
-     */
-    entityInteract(game, entity, action) {
-        //        if(game.level>1) return;
-        if (entity instanceof Player) {
-            if (entity.isPlayer && action == 'up' && game.level == entity.startLevel && entity.controlStates["up"] && !entity.oldControlStates["up"]) {
-                entity.cycleSprite(game);
-            }
-
+    /**@type {Tile['playerInteract']} */
+    playerInteract(game, player, action) {
+        if (player.isPlayer && action == 'up' && game.level == player.startLevel && 
+            player.controlStates["up"] && !player.oldControlStates["up"]) {
+            player.cycleSprite(game);
         }
     }
 }
 
 export class Exit extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {boolean} locked 
+     */
     constructor(pos, locked = false) {
-        super(pos[0], pos[1], locked ? tileIds.LockedExit : tileIds.Exit, true);
+        super(pos, locked ? tileIds.LockedExit : tileIds.Exit, true);
         this._locked = locked
     }
 
@@ -202,14 +252,15 @@ export class Exit extends Tile {
         this._locked = val;
     }
 
-    entityInteract(game, entity, action) {
+    /**@type {Tile['playerInteract']} */
+    playerInteract(game, player, action) {
         if (game.competitiveMode && game.levelTime > game.startLevelTime / 2)
             return;
-        if (entity.isPlayer && action == 'up' && entity.controlStates["up"] && !entity.oldControlStates["up"]) {
-            entity.escaped = true;
+        if (action == 'up' && player.controlStates["up"] && !player.oldControlStates["up"]) {
+            player.escaped = true;
             game.playSound('exitLevel');
             if (game.competitiveMode)
-                entity.score += 2;
+                player.score += 2;
         }
     }
 }
@@ -219,27 +270,41 @@ export class Kiosk extends Tile {
 }
 
 export class KioskScreen extends Kiosk {
+    /**
+     * 
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos[0], pos[1], tileIds.KioskScreen, true, false);
-        /**@type {InventoryItem[]} */
+        super(pos, tileIds.KioskScreen, true, false);
+        /**@type {KioskPickup[]} */
         this.items = [];
-        /**@type {InventoryItem|null} */
+        /**@type {KioskPickup|null} */
         this.activeItem = null;
+        /**@type {Set<Player>} */
         this.used = new Set();
     }
     draw(game) {
         super.draw(game);
-        // if(this.activeItem!=null)
-        //     this.activeItem.draw(game);
+        if(this.activeItem!=null)
+            this.activeItem.draw(game);
     }
 }
 
 export class KioskDispenser extends Kiosk {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {KioskScreen} kioskScreen 
+     */
     constructor(pos, kioskScreen) {
-        super(pos[0], pos[1], tileIds.KioskDispenser, true, false);
+        super(pos, tileIds.KioskDispenser, true, false);
+        /**@type {KioskPickup[]} */
         this.items = [];
+        /**@type {number|null} */
         this.activeItem = -1;
+        /**@type {Set<Player>} */
         this.used = new Set();
+        /**@type {KioskScreen} */
         this.screen = kioskScreen;
     }
     setItems(items) {
@@ -250,22 +315,27 @@ export class KioskDispenser extends Kiosk {
         this.activeItem = -1;
         this.screen.activeItem = this.activeItem >= 0 ? this.items[this.activeItem] : null;
     }
-    entityInteract(game, entity, action) {
-        if (!entity.isPlayer)
+    /**
+     * 
+     * @param {Game} game 
+     * @param {Player} player 
+     * @param {string} action 
+     * @returns 
+     */
+    playerInteract(game, player, action) {
+        if (this.used.has(player))
             return;
-        if (this.used.has(entity))
-            return;
-        if (action == "down" && entity.controlStates["down"] && !entity.oldControlStates["down"]) {
+        if (action == "down" && player.controlStates["down"] && !player.oldControlStates["down"]) {
             game.playSound('kioskInteract');
             this.activeItem = this.activeItem < this.items.length - 1 ? this.activeItem + 1 : 0;
         }
-        if (this.activeItem >= 0 && action == "up" && entity.controlStates["up"] && !entity.oldControlStates["up"]) {
+        if (this.activeItem >= 0 && action == "up" && player.controlStates["up"] && !player.oldControlStates["up"]) {
             if (this.items.length == 0)
                 return;
-            this.items[this.activeItem].activate(entity);
+            this.items[this.activeItem].activate(player);
             //            this.items.splice(this.activeItem,1);
             //            this.activeItem = this.activeItem>0? this.activeItem-1:0;
-            this.used.add(entity);
+            this.used.add(player);
             this.activeItem = -1;
             game.playSound('kioskDispense');
         }
@@ -274,8 +344,12 @@ export class KioskDispenser extends Kiosk {
 }
 
 export class GunPlatformJunction extends Tile {
+    /**
+     * 
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos[0], pos[1], tileIds.Wall, false, false);
+        super(pos, tileIds.Wall, false, false);
     }
     /**
      * 
@@ -283,14 +357,19 @@ export class GunPlatformJunction extends Tile {
      */
     initItems(game) {
         if (game.tiles.below(this.pos).tile.passable) {
-            // game.monsters.push(new GunPlatform(this));
+            game.addGunPlatform(this);
         }
     }
 }
 
 export class TrapBlock extends Tile {
+    /**
+     * 
+     * @param {Vec2} pos 
+     * @param {'cycling'|'contact'|'static'} type 
+     */
     constructor(pos, type = null) {
-        super(pos[0], pos[1], tileIds.TrapBlock, false, false);
+        super(pos, tileIds.TrapBlock, false, false);
         if (type == null) {
             type = choose(['cycling', 'contact', 'static']);
         }
@@ -308,10 +387,10 @@ export class TrapBlock extends Tile {
     /**@type {Tile['initItems']} */
     initItems(game) {
         if (game.tiles.above(this.pos).tile.passable) {
-            this.trap = new TrapBlade(this);
-            game.items.push(this.trap);
+            this.trap = game.addTrapBlade(this);
         }
     }
+    /**@type {Tile['stoodOnBy']} */
     stoodOnBy(entity, vel) {
         if (entity.isPlayer && !this.triggered && this.trap != null) {
             this.trap.triggered = true;
@@ -324,37 +403,6 @@ export class TrapBlock extends Tile {
             this.trap.drawAsTile(game); //Render the blade beneath the tile -- this is a bit of a kludge
         }
         super.draw(game);
-    }
-}
-
-export class Tree extends Tile {
-    constructor(pos, type, map, height = 3, level = 1) {
-        //TODO: This manipulates the map unlike all other tile class constructors
-        let sprite;
-        let climbable;
-        let t = map.above(pos);
-        switch (type) {
-            case 'apple':
-                sprite = level == 1 ? tileIds.TrunkBox : (level == height || !t.passable ? tileIds.AppleTreeTop : tileIds.Trunk);
-                climbable = level == height - 1;
-                break;
-            case 'maple':
-                sprite = level == 1 ? tileIds.TrunkBox : (level == height || !t.passable ? tileIds.TreeTop : tileIds.Trunk);
-                climbable = level == height - 1;
-                break;
-            case 'pine':
-                sprite = level == 1 ? tileIds.PineBox : (level == height || !t.passable ? tileIds.PineTop : tileIds.PineMid);
-                climbable = level < height;
-                break;
-        }
-        super(pos[0], pos[1], sprite, true, climbable);
-        this.climingLevel = 1;
-        this.treeAbove = (level < height && t.passable) ? map.set(t, Tree, type, map, height, level + 1) : null;
-    }
-    destroy() {
-        if (this.treeAbove != null) {
-            this.treeAbove.destroy();
-        }
     }
 }
 

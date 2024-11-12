@@ -399,8 +399,8 @@ function generateTiles(game) {
     tiles.startTile = tiles.at([15, 15]);
     tiles.endTile = tiles.at([10, 10]);
     let kioskPos = [20, 20]
-    let ks = tiles.above(new Vec2(kioskPos)).replace(KioskScreen);
-    let kt = tiles.set(kioskPos, KioskDispenser, ks);
+    let ks = tiles.above(new Vec2(kioskPos)).replace(KioskScreen).tile;
+    let kt = tiles.get(kioskPos).replace(KioskDispenser).tile;
     tiles.kioskTile = kt;
 }
 

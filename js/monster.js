@@ -4,7 +4,6 @@ import { randomRange, Rect, Timer, Vec2 } from "./util";
 import { baseSetIds, monsterRowLocIds } from "./sprites";
 import { Tile, Void, Wall } from "./tile";
 import { Entity } from "./entity";
-import { Boom, Chips } from "./entity_items";
 /**@typedef {import('./game').Game} Game */
 
 export class Monster extends Entity {
@@ -88,9 +87,7 @@ export class Monster extends Entity {
         if (!this.isPlayer) {
             let t = game.tiles.closestTile(this.bounds());
             if (t instanceof Void) return;
-            let c = new Chips(t);
-            c.pos = this.pos;
-            game.items.push(c);
+            game.addChips(t, 1);
         }
 
     }
@@ -312,15 +309,21 @@ export class Monster extends Entity {
     fallBoom(game, radius) {
         this.die(game);
         game.playSound('boom');
-        for (let t of game.tiles.iterRange(game.tiles.closestPos(this.pos), radius))
-            if (!(t instanceof Wall))
-                game.items.push(new Boom(t));
-        for (let m of game.monsters)
-            if (this.pos.dist(m.pos) <= radius)
+        for (let t of game.tiles.iterRange(game.tiles.closestPos(this.pos), radius)) {
+            if (!(t instanceof Wall)) {
+                game.addBoom(t, 0.5);
+            }
+        }
+        for (let m of game.monsters) {
+            if (this.pos.dist(m.pos) <= radius) {
                 m.hitFrom(game, this.pos, this.hitDamage * 3);
-        for (let player of game.activePlayers)
-            if (this.pos.dist(player.pos) <= radius)
+            }
+        }
+        for (let player of game.activePlayers) {
+            if (this.pos.dist(player.pos) <= radius) {
                 player.hitFrom(game, this.pos, this.hitDamage * 3);
+            }
+        }
     }
 }
 

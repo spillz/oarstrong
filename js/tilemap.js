@@ -1,10 +1,8 @@
 //@ts-check
 
-import { Entity } from "./entity.js";
-import { Monster } from "./monster.js";
 import { Tile, Void } from "./tile.js";
 import { Rect, shuffle, Vec2 } from "./util";
-
+/**@typedef {import('./entity').Entity} Entity */
 /**@typedef {Vec2|[number,number]|number[]} VecLike */
 
 export class TileStepper {
@@ -109,7 +107,7 @@ export class TileMap {
         for (let i = 0; i < dimW; i++) {
             this.array[i] = [];
             for (let j = 0; j < dimH; j++)
-                this.array[i][j] = new Tile(i, j);
+                this.array[i][j] = new Tile([i, j]);
         }
     }
     isValidPos(vec) {
@@ -147,7 +145,7 @@ export class TileMap {
     set(vec, tileType, ...extraArgs) {
         if (!this.isValidPos(vec))
             return null;
-        let t = new tileType(vec[0], vec[1], ...extraArgs);
+        let t = new tileType(vec, ...extraArgs);
         this.array[vec[0]][vec[1]] = t;
         return t;
     }

@@ -492,7 +492,7 @@ export class Game {
             startingItems[0].count = 4;
             startingItems[3].count = 5;
             for (let i of [new inventory.Shield(), new inventory.Glider()]) {
-                player.passiveInventory.add(this, i);
+                player.passiveInventory.add(i);
             }
         } else {
             startingItems = [new inventory.Fist()];
@@ -501,7 +501,7 @@ export class Game {
             }
         }
         for (let i of startingItems) {
-            player.inventory.add(this, i);
+            player.inventory.add(i);
         }
         player.inventory.select(player.inventory[0]);
         player.pos = this.tiles.startTile.pos;
@@ -536,7 +536,7 @@ export class Game {
             startingItems[0].count = 4;
             startingItems[3].count = 5;
             for (let i of [new inventory.Shield(), new inventory.Glider()]) {
-                player.passiveInventory.add(this, i);
+                player.passiveInventory.add(i);
             }
         }
         else {
@@ -546,7 +546,7 @@ export class Game {
             }
         }
         for (let i of startingItems) {
-            player.inventory.add(this, i);
+            player.inventory.add(i);
         }
         player.inventory.select(player.inventory[0]);
         this.startLevel();
@@ -716,6 +716,43 @@ export class Game {
                 players.splice(k, 1);
             }
         }
+    }
+    /**
+     * 
+     * @param {tile.Tile} tile 
+     */
+    addGunPlatform(tile) {
+        return;
+        // this.monsters.push(new monster.GunPlatform(tile));
+    }
+    /**
+     * 
+     * @param {tile.Tile} tile 
+     * @param {number} value
+     */
+    addChips(tile, value) {
+        const chips = new entityItems.Chips(tile, value)
+        this.items.push(chips);
+        return chips;
+    }
+    /**
+     * 
+     * @param {tile.Tile} tile 
+     * @param {number} timer 
+     */
+    addBoom(tile, timer) {
+        const boom = new entityItems.Boom(tile, timer)
+        this.items.push(boom);
+        return boom;
+    }
+    /**
+     * 
+     * @param {tile.Tile} tile 
+     */
+    addTrapBlade(tile) {
+        const trapBlade = new entityItems.TrapBlade(tile)
+        this.items.push(trapBlade);
+        return trapBlade;
     }
 }
 

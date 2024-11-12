@@ -1,13 +1,21 @@
 //@ts-check
 
 import { randomRange, Vec2 } from "./util";
-import { entityItemIds } from "./sprites";
+import { pickups } from "./sprites";
 import { Drone, Fist, Glider, GrappleGun, Grenade, Gun, JetPack, PowerSaber, Rifle, RocketLauncher, Shield, Shotgun, Wrench } from "./inventory";
+/**@typedef {import('./player').Player} Player */
 /**@typedef {import('./game').Game} Game */
 
 export class KioskPickup {
+    /**
+     * 
+     * @param {Vec2} pos 
+     * @param {[number, number]} sprite 
+     */
     constructor(pos, sprite) {
+        /**@type {Vec2} */
         this.pos = new Vec2(pos);
+        /**@type {[number, number]} */
         this.sprite = sprite;
     }
     getDisplayX() {
@@ -23,12 +31,22 @@ export class KioskPickup {
     draw(game) {
         game.sprites.entitiesItems.drawScaled(this.sprite, this.getDisplayX(), this.getDisplayY(), 0.5);
     }
+    /**
+     * 
+     * @param {Player} player 
+     */
+    activate(player) {
+    }
 }
 
 export class HealthPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Health);
+        super(pos, pickups.Health);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         player.maxHp += 1;
@@ -38,9 +56,13 @@ export class HealthPickup extends KioskPickup {
 }
 
 export class FistPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Fist);
+        super(pos, pickups.Fist);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(Fist);
@@ -52,9 +74,13 @@ export class FistPickup extends KioskPickup {
 
 
 export class GunPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Gun);
+        super(pos, pickups.Gun);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(Gun);
@@ -66,9 +92,13 @@ export class GunPickup extends KioskPickup {
 }
 
 export class ShotgunPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Shotgun);
+        super(pos, pickups.Shotgun);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(Shotgun);
@@ -80,9 +110,13 @@ export class ShotgunPickup extends KioskPickup {
 }
 
 export class RiflePickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.AssaultRifle);
+        super(pos, pickups.AssaultRifle);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(Rifle);
@@ -94,9 +128,13 @@ export class RiflePickup extends KioskPickup {
 }
 
 export class RocketLauncherPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.RocketLauncher);
+        super(pos, pickups.RocketLauncher);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(RocketLauncher);
@@ -109,9 +147,13 @@ export class RocketLauncherPickup extends KioskPickup {
 
 
 export class GrenadePickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Grenade);
+        super(pos, pickups.Grenade);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(Grenade);
@@ -123,9 +165,13 @@ export class GrenadePickup extends KioskPickup {
 }
 
 export class PowerSaberPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.VibroBlade);
+        super(pos, pickups.VibroBlade);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(PowerSaber);
@@ -137,9 +183,13 @@ export class PowerSaberPickup extends KioskPickup {
 
 
 export class JetPackPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.JetPack);
+        super(pos, pickups.JetPack);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(JetPack);
@@ -151,9 +201,13 @@ export class JetPackPickup extends KioskPickup {
 }
 
 export class WrenchPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Wrench);
+        super(pos, pickups.Wrench);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(Wrench);
@@ -165,9 +219,13 @@ export class WrenchPickup extends KioskPickup {
 }
 
 export class GrappleGunPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.GrappleGun);
+        super(pos, pickups.GrappleGun);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(GrappleGun);
@@ -178,9 +236,13 @@ export class GrappleGunPickup extends KioskPickup {
 }
 
 export class DronePickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Drone);
+        super(pos, pickups.Drone);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.inventory.contains(Drone);
@@ -192,9 +254,13 @@ export class DronePickup extends KioskPickup {
 }
 
 export class ShieldPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Shield);
+        super(pos, pickups.Shield);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.passiveInventory.contains(Shield);
@@ -207,9 +273,13 @@ export class ShieldPickup extends KioskPickup {
 }
 
 export class GliderPickup extends KioskPickup {
+    /**
+     * @param {Vec2} pos 
+     */
     constructor(pos) {
-        super(pos, entityItemIds.Glider);
+        super(pos, pickups.Glider);
     }
+    /**@type {KioskPickup['activate']} */
     activate(player) {
         //        game.playSound("pickup");
         let upgrade = player.passiveInventory.contains(Glider);

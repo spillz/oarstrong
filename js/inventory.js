@@ -1,10 +1,10 @@
 //@ts-check
 import { getRandomInt, Vec2 } from './util';
-import { Entity } from './entity';
 import { Boom, LiveDrone, LiveGrenade, LiveRocket, MonsterBoom, Reticle, SaberStrike, Shot, ShotFrags } from './entity_items';
 import { entityItemIds } from './sprites';
-import { Player } from './player';
 import { Exit, Floor, Kiosk } from './tile';
+import { Entity } from './entity';
+/**@typedef {import('./player').Player} Player */
 /**@typedef {import('./game').Game} Game */
 
 
@@ -34,17 +34,16 @@ export class Inventory extends Array {
     }
     /**
      * 
-     * @param {Game} game 
-     * @param {*} itemType 
+     * @param {typeof InventoryItem} itemType 
      * @returns 
      */
-    get(game, itemType) {
+    get(itemType) {
         for (let i = 0; i < this.length; i++)
             if (this[i] instanceof itemType) {
                 return this[i];
             }
         let item = new itemType(this);
-        this.add(game, item);
+        this.add(item);
         return item;
     }
     contains(itemType) {
@@ -57,12 +56,11 @@ export class Inventory extends Array {
     }
     /**
      * 
-     * @param {Game} game 
      * @param {InventoryItem} item 
      */
-    add(game, item) {
+    add(item) {
         this.push(item);
-        this.setPositions(game);
+        //this.setPositions(game);
         item.registerHooks(this.player); //todo: deregistor hooks??
     }
     /**
