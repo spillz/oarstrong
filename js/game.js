@@ -122,14 +122,14 @@ export class Game {
                 p.newControlStates[s] = p.oldControlStates[s] !== p.controlStates[s];
             }
         }
-        if (this.gameState == "dead" && !controllers.oldControlStates["jump"] && controllers.controlStates["jump"]) {
+        if (this.gameState == "dead" && !controllers.oldControlStates["dash"] && controllers.controlStates["dash"]) {
             this.gameState = "scores"
         }
         else if (this.gameState == "running" || this.gameState == "dead") {
             if (this.gameState == "running" && controllers.controlStates['menu'] && !controllers.oldControlStates['menu']) {
                 this.gameState = "paused";
             }
-            if (this.gameState == "running" && controllers.controlStates['jump'] && !controllers.oldControlStates['jump']) {
+            if (this.gameState == "running" && controllers.controlStates['dash'] && !controllers.oldControlStates['dash']) {
                 if (controllers.lastController.player == null)
                     this.addPlayer();
             }
@@ -216,7 +216,7 @@ export class Game {
             this.showTitle();
         } else if (this.gameState === "scores") {
             this.showTitle();
-            if (!controllers.oldControlStates["jump"] && controllers.controlStates["jump"]) {
+            if (!controllers.oldControlStates["dash"] && controllers.controlStates["dash"]) {
                 this.gameState = "title"
             }
         } else if (this.gameState === "paused") {

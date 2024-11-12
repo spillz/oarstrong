@@ -62,7 +62,7 @@ export class Menu {
             this.callback(this, 'change');
         }
         if (controllers.controlStates['use'] && !controllers.oldControlStates['use'] ||
-            controllers.controlStates['jump'] && !controllers.oldControlStates['jump'])
+            controllers.controlStates['dash'] && !controllers.oldControlStates['dash'])
             this.callback(this, 'select');
     }
 }
@@ -218,7 +218,7 @@ export class InGameMenu extends Menu {
                     break;
                 case 1:
                     for (let p of game.activePlayers) {
-                        if (p.controlStates['jump'] && !p.oldControlStates['jump']) {
+                        if (p.controlStates['dash'] && !p.oldControlStates['dash']) {
                             p.dead = true;
                             p.dropFromGame = true;
                             game.gameState = 'running';

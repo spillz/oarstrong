@@ -3,19 +3,23 @@
 /**@typedef {import('./game').Game} Game */
 
 //Global control states affected by all controllers
-/**@typedef {{[id:string]:boolean}} ControlStatesType */
+/**
+ * @typedef {{left:boolean, right:boolean, up:boolean, down:boolean, cycle:boolean, 
+ * use:boolean, dodge:boolean, dash:boolean, camera:boolean, menu:boolean}} ControlStatesType 
+ * */
 
 /**@type {ControlStatesType} */
-export var controlStates = {
-    'left': false,
-    'right': false,
-    'up': false,
-    'down': false,
-    'cycle': false,
-    'use': false,
-    'jump': false,
-    'camera': false,
-    'menu': false,
+export const controlStates = {
+    left: false,
+    right: false,
+    up: false,
+    down: false,
+    cycle: false,
+    use: false,
+    dodge: false,
+    dash: false,
+    camera: false,
+    menu: false,
 };
 var controlStates0 = { ...controlStates };
 
@@ -30,15 +34,16 @@ export var newControlStates = { ...controlStates };
 
 /**
  * 
- * @param {ControlStatesType} constrolStates 
+ * @param {ControlStatesType} controlStates 
  */
-export function setOldControlStates(constrolStates) {
+export function setOldControlStates(controlStates) {
     oldControlStates = { ...controlStates };
 }
 
 /**@type {Controller|null} */
 export var lastController = null;
 
+/**@type {{[id:string]:keyof ControlStatesType}} */
 export var defaultKeyMap = {
     'ArrowLeft': 'left',
     'ArrowRight': 'right',
@@ -48,16 +53,14 @@ export var defaultKeyMap = {
     'd': 'right',
     'w': 'up',
     's': 'down',
-    'j': 'jump',
+    'j': 'dash',
     'k': 'use',
     'l': 'cycle',
-    'i': 'run',
-    'u': 'door',
-    ' ': 'jump',
+    'i': 'dodge',
+    ' ': 'dash',
     'z': 'use',
     'x': 'cycle',
-    'c': 'run',
-    'v': 'door',
+    'c': 'dodge',
     '0': 'camera',
     'Escape': 'menu',
 }

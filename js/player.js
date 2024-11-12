@@ -165,19 +165,19 @@ export class Player extends Monster {
                 //this.runCheck(millis);
                 this.entityInteract(game);
                 if (this.stunTimer.finished()) {
-                    this.walkCheck(game, millis, this.running);
+                    this.moveCheck(game, millis, this.running);
                     this.cycleInventoryCheck(game, millis);
                 }
-                if (!this.oldControlStates['jump'] && this.controlStates['jump'] 
-                    && (this.vel.x!==0 || this.vel.y!==0)) {
-                    this.setState(game, STATE_DASH);
-                }
-                if (!this.aiming) {
-                    this.tileInteract(game, millis)
-                    if (this.activeState != STATE_WALK)
+                if((this.vel.x!==0 || this.vel.y!==0)) {
+                    if (!this.oldControlStates['dodge']  && this.controlStates['dodge'] ) {
+                        this.setState(game, STATE_DODGE);
                         return;
+                    } else if (!this.oldControlStates['dash'] && this.controlStates['dash']) {
+                        this.setState(game, STATE_DASH);
+                        return;
+                    }    
                 }
-                this.jumpCheck(game);
+                this.tileInteract(game, millis)
 
                 if (this.fallCheck()) this.setState(game, STATE_STUN);
                 break;
@@ -186,21 +186,16 @@ export class Player extends Monster {
                     this.entityInteract(game);
 
                     if (this.stunTimer.finished()) {
-                        this.walkCheck(game, millis, false);
+                        this.moveCheck(game, millis, false);
                         this.cycleInventoryCheck(game, millis);
                     }
-
-                    // // jump
-                    // if(this.fromJump && this.stateTimer.elapsed<100) {
-                    //     this.jumpCheck(millis);
-                    // }
 
                     // Tile interactions pressing up/down
                     this.tileInteract(game, millis);
 
                 }
 
-                if (!this.jumpTimer.finished() && this.vel.y < 0 && !this.controlStates['jump']) { //Kill the jump for early release
+                if (!this.jumpTimer.finished() && this.vel.y < 0 && !this.controlStates['dash']) { //Kill the jump for early release
                     this.vel.y *= 0.5 ** (millis / 15);
                 }
                 // check we are still falling
@@ -236,6 +231,21 @@ export class Player extends Monster {
                 }
                 break;
             case STATE_DODGE:
+                this.entityInteract(game);
+                if (this.stunTimer.finished()) {
+                    this.moveCheck(game, millis, true);
+                    this.cycleInventoryCheck(game, millis);
+                }
+                if (!this.oldControlStates['dash'] && this.controlStates['dash'] 
+                    && (this.vel.x!==0 || this.vel.y!==0)) {
+                    this.setState(game, STATE_DASH);
+                }
+                this.tileInteract(game, millis);
+                if (this.stateTimer.elapsed>400) {
+                    this.setState(game, STATE_STAND);
+                }
+
+                if (this.fallCheck()) this.setState(game, STATE_STUN);
                 break;
             case STATE_DEAD:
                 break;
@@ -378,54 +388,45 @@ export class Player extends Monster {
         //Move player
         game.tiles.move(this, millis); //TODO: there are some weird edge cases here when the collision involves diagonal moves (or large moves)
 
-
-
     }
 
     /**
      * 
      * @param {Game} game 
      * @param {number} millis 
-     * @param {boolean} running 
+     * @param {boolean} dodging 
      */
-    walkCheck(game, millis, running) {
+    moveCheck(game, millis, dodging) {
         // left
         if (this.controlStates['left']) {
-            this.vel.x = Math.max(-this.topSpeed * (running ? 2.0 : 1.0), this.vel.x - 1.0 / 1600 * millis / 15);
+            this.vel.x = Math.max(-this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.x - 1.0 / 1600 * millis / 15);
             this.facing = -1;
         }
-        else {
-            if (this.vel.x < 0)
-                this.vel.x = 0;
+        else if (!dodging && this.vel.x < 0) {
+            this.vel.x = 0;
         }
-
         // right
         if (this.controlStates['right']) {
-            this.vel.x = Math.min(this.topSpeed * (running ? 2.0 : 1.0), this.vel.x + 1.0 / 1600 * millis / 15);
+            this.vel.x = Math.min(this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.x + 1.0 / 1600 * millis / 15);
             this.facing = 1;
         }
-        else {
-            if (this.vel.x > 0)
-                this.vel.x = 0;
+        else if (!dodging && this.vel.x > 0) {
+            this.vel.x = 0;
         }
         // up
         if (this.controlStates['up']) {
-            this.vel.y = Math.max(-this.topSpeed * (running ? 2.0 : 1.0), this.vel.y - 1.0 / 1600 * millis / 15);
-            // this.facing = -1;
+            this.vel.y = Math.max(-this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.y - 1.0 / 1600 * millis / 15);
         }
-        else {
-            if (this.vel.y < 0)
-                this.vel.y = 0;
+        else if (!dodging && this.vel.y < 0) {
+            this.vel.y = 0;
         }
 
         // down
         if (this.controlStates['down']) {
-            this.vel.y = Math.min(this.topSpeed * (running ? 2.0 : 1.0), this.vel.y + 1.0 / 1600 * millis / 15);
-            // this.facing = 1;
+            this.vel.y = Math.min(this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.y + 1.0 / 1600 * millis / 15);
         }
-        else {
-            if (this.vel.y > 0)
-                this.vel.y = 0;
+        else if (!dodging && this.vel.y > 0) {
+            this.vel.y = 0;
         }
     }
 
@@ -464,19 +465,6 @@ export class Player extends Monster {
         else this.running = true;
     }
 
-    /**
-     * 
-     * @param {Game} game 
-     */
-    jumpCheck(game) {
-        // jump
-        if (!this.oldControlStates['jump'] && this.controlStates['jump']) {
-            this.vel.y = -this.jumpSpeed;
-            this.setState(game, STATE_DODGE);
-            this.jumpTimer.reset(200);
-            return;
-        }
-    }
     /**
      * 
      * @param {Game} game 
