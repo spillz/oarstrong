@@ -241,7 +241,7 @@ export class Player extends Monster {
                     this.setState(game, STATE_DASH);
                 }
                 this.tileInteract(game, millis);
-                if (this.stateTimer.elapsed>400) {
+                if (this.stateTimer.elapsed>500) {
                     this.setState(game, STATE_STAND);
                 }
 
@@ -264,7 +264,7 @@ export class Player extends Monster {
 
     /**@type {Monster['hitFrom']} */
     hitFrom(game, pos, damage, knockbackScale = 0) {
-        if (!this.dead && !this.escaped && this.immunityTimer.finished()) {
+        if (!this.dead && !this.escaped && this.activeState!==STATE_DODGE && this.immunityTimer.finished()) {
             for (let i of this.hookHitModifier) {
                 [damage, knockbackScale] = i.hitModifier(damage, knockbackScale);
             }
@@ -399,7 +399,7 @@ export class Player extends Monster {
     moveCheck(game, millis, dodging) {
         // left
         if (this.controlStates['left']) {
-            this.vel.x = Math.max(-this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.x - 1.0 / 1600 * millis / 15);
+            this.vel.x = Math.max(-this.topSpeed * (dodging ? 2.0 : 1.0), this.vel.x - 1.0 / 1600 * millis / 15);
             this.facing = -1;
         }
         else if (!dodging && this.vel.x < 0) {
@@ -407,7 +407,7 @@ export class Player extends Monster {
         }
         // right
         if (this.controlStates['right']) {
-            this.vel.x = Math.min(this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.x + 1.0 / 1600 * millis / 15);
+            this.vel.x = Math.min(this.topSpeed * (dodging ? 2.0 : 1.0), this.vel.x + 1.0 / 1600 * millis / 15);
             this.facing = 1;
         }
         else if (!dodging && this.vel.x > 0) {
@@ -415,7 +415,7 @@ export class Player extends Monster {
         }
         // up
         if (this.controlStates['up']) {
-            this.vel.y = Math.max(-this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.y - 1.0 / 1600 * millis / 15);
+            this.vel.y = Math.max(-this.topSpeed * (dodging ? 2.0 : 1.0), this.vel.y - 1.0 / 1600 * millis / 15);
         }
         else if (!dodging && this.vel.y < 0) {
             this.vel.y = 0;
@@ -423,7 +423,7 @@ export class Player extends Monster {
 
         // down
         if (this.controlStates['down']) {
-            this.vel.y = Math.min(this.topSpeed * (dodging ? 1.5 : 1.0), this.vel.y + 1.0 / 1600 * millis / 15);
+            this.vel.y = Math.min(this.topSpeed * (dodging ? 2.0 : 1.0), this.vel.y + 1.0 / 1600 * millis / 15);
         }
         else if (!dodging && this.vel.y > 0) {
             this.vel.y = 0;
