@@ -129,6 +129,29 @@ export class BeachUpper extends Tile {
     };
 }
 
+export class Palm extends Tile {
+    /**
+     * 
+     * @param {VecLike} pos 
+     * @param {[number, number]} sprite 
+     */
+    constructor(pos, sprite = null) {
+        if (sprite == null) {
+            sprite = baseSetIds.BeachUpper;
+        }
+        super(pos, sprite, false, false);
+        this.palmSprite = baseSetIds.Palm;
+    };
+    bounds() {
+        return new Rect([this.x + 0.25,  this.y + 0.1, 0.5, 0.8]);
+    }
+    draw(game) {
+        super.draw(game);
+        game.sprites.base.draw(this.palmSprite, this.x, this.y, false);
+    }
+    
+}
+
 export class WaterShallow extends Tile {
     /**
      * 

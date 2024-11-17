@@ -22,6 +22,8 @@ const STATE_DEAD = 5;
 export class Player extends Monster {
     isPlayer = true;
     boundingBox = new Rect([0.25, 0.5, 0.5, 0.5]);
+    hitBox = new Rect([0.25, 0.25, 0.5, 0.5]);
+    dashBox = new Rect([0, 0.25, 1, 1]);
     immunityTimer = new Timer(1000, 1000);
     selectedTimer = new Timer(500, 500);
     hitTimer = new Timer(500, 500);
@@ -82,19 +84,33 @@ export class Player extends Monster {
         /**@type {ReturnType<initializeControlStates>} */
         this.oldControlStates = { ...initializeControlStates() };
 
-        this.sprite = /**@type {[number, number]} */([0, 0]);
-        this.setWalkFrames();
+        this.sprite = /**@type {[number, number]} */([0, 8]);
+        this.setAnimationFrames();
         // this.cycleSprite();
     }
-    setWalkFrames() {
+    dashBounds() {
+        const dx = this.vel.x>0? 0.5 :
+                   this.vel.x<0 ? -0.5: 0;
+        const dy = this.vel.y>0? 0.5 :
+                   this.vel.y<0 ? -0.5: 0;
+        const dir = [this.pos.x + dx, this.pos.y + dy];
+        return this.dashBox.shift(dir);
+    }
+    setAnimationFrames() {
         //Animation data
         const y = this.sprite[1]
-        this.walkFrames = [
-            new Vec2([2, y]), new Vec2([3, y]),
-            new Vec2([4, y]), new Vec2([3, y]),
-            new Vec2([2, y]), new Vec2([5, y]),
-            new Vec2([6, y]), new Vec2([5, y])
-        ];
+        /**@type {{WALK_EW:Vec2[], WALK_N:Vec2[], WALK_S:Vec2[], DASH_EW:Vec2[], DASH_N:Vec2[], DASH_S:Vec2[], STAND:Vec2[]}} */
+        this.animationFrames = {
+            WALK_EW: [new Vec2([1, y]), new Vec2([2, y]),
+                new Vec2([3, y]), new Vec2([3, y]),
+                new Vec2([2, y]), new Vec2([1, y])],
+            WALK_N: [new Vec2([6,y]), new Vec2([7,y]), new Vec2([7,y]), new Vec2([6,y])],
+            WALK_S: [new Vec2([4,y]), new Vec2([5,y]), new Vec2([5,y]), new Vec2([4,y])],
+            DASH_EW: [new Vec2([11,y]), new Vec2([12,y]), new Vec2([13,y])],
+            DASH_N: [new Vec2([14,y]), new Vec2([15,y]), new Vec2([15,y]), new Vec2([14,y])],
+            DASH_S: [new Vec2([12,y]), new Vec2([13,y]), new Vec2([13,y]), new Vec2([12,y])],
+            STAND: [new Vec2([0,y])],
+        };
     }
     /**
      * 
@@ -108,7 +124,7 @@ export class Player extends Monster {
             if (takenSprites.includes(this.sprite[1])) continue;
             break;
         }
-        this.setWalkFrames();
+        this.setAnimationFrames();
     }
 
     /**@type {Monster['die']} */
@@ -167,23 +183,22 @@ export class Player extends Monster {
                 if (this.stunTimer.finished()) {
                     this.moveCheck(game, millis, this.running);
                     this.cycleInventoryCheck(game, millis);
-                }
-                if((this.vel.x!==0 || this.vel.y!==0)) {
-                    if (!this.oldControlStates['dodge']  && this.controlStates['dodge'] ) {
-                        this.setState(game, STATE_DODGE);
-                        return;
-                    } else if (!this.oldControlStates['dash'] && this.controlStates['dash']) {
-                        this.setState(game, STATE_DASH);
-                        return;
-                    }    
+                    if((this.vel.x!==0 || this.vel.y!==0)) {
+                        if (!this.oldControlStates['dodge']  && this.controlStates['dodge'] ) {
+                            this.setState(game, STATE_DODGE);
+                            return;
+                        } else if (!this.oldControlStates['dash'] && this.controlStates['dash']) {
+                            this.setState(game, STATE_DASH);
+                            return;
+                        }    
+                    }
                 }
                 this.tileInteract(game, millis)
-
-                if (this.fallCheck()) this.setState(game, STATE_STUN);
                 break;
             case STATE_STUN:
                 if (this.stunTimer.finished()) {
                     this.entityInteract(game);
+                    this.setState(game, STATE_WALK);
 
                     if (this.stunTimer.finished()) {
                         this.moveCheck(game, millis, false);
@@ -198,34 +213,15 @@ export class Player extends Monster {
                 if (!this.jumpTimer.finished() && this.vel.y < 0 && !this.controlStates['dash']) { //Kill the jump for early release
                     this.vel.y *= 0.5 ** (millis / 15);
                 }
-                // check we are still falling
-                if (!this.fallCheck()) {
-                    //Vibrate -- hard coding velocity threshold
-                    if (Math.abs(this.vel.y) > 0.01 && this.vel.y == 0) {
-                        this.controller.vibrate(20 * Math.abs(this.vel.y), 20 * Math.abs(this.vel.y), 50);
-                    }
-                    this.vel.y = 0;
-                    this.setState(game, STATE_WALK);
-                    return;
-                }
-                if (this.vel.y >= 0) { //check if falling onto a ledge
-                    for (let tbelow of game.tiles.contacters(this.bounds())) {
-                        if (tbelow.standable && game.tiles.above(tbelow.pos).tile.passable && !game.tiles.above(tbelow.pos).tile.climbable) {
-                            let ycut = this.bounds().bottom
-                            if (ycut > tbelow.y && ycut - this.vel.y * millis <= tbelow.y) {
-                                this.pos.y -= ycut - tbelow.y;
-                                this.vel.y = 0;
-                                this.setState(game, STATE_WALK);
-                                return;
-                            }
-                        }
-                    }
-                }
-                // gravity
-                this.vel.y = Math.min(this.maxFallSpeed, this.vel.y + 1.0 / 4800 * millis / 15);
                 break;
             case STATE_DASH:
                 this.entityInteract(game);
+                for (let m of game.monsters) {
+                    if (m.hitBounds().collide(this.dashBounds())) {
+                        m.hitFrom(game, this.pos, 1, 2);
+                        m.stun();
+                    }
+                }
                 if (this.stateTimer.elapsed>100) {
                     this.setState(game, STATE_STAND);
                 }
@@ -244,10 +240,9 @@ export class Player extends Monster {
                 if (this.stateTimer.elapsed>500) {
                     this.setState(game, STATE_STAND);
                 }
-
-                if (this.fallCheck()) this.setState(game, STATE_STUN);
                 break;
             case STATE_DEAD:
+                this.driftCheck(game, millis, false);
                 break;
         }
     }
@@ -285,6 +280,11 @@ export class Player extends Monster {
 
     /**@type {Monster['draw']} */
     draw(game) {
+        const activeAnimation = this.vel.x!==0 ? (this.activeState===STATE_DASH ? this.animationFrames.DASH_EW: this.animationFrames.WALK_EW) :
+            this.vel.y > 0 ? (this.activeState===STATE_DASH ? this.animationFrames.DASH_S: this.animationFrames.WALK_S) :
+            this.vel.y < 0 ? (this.activeState===STATE_DASH ? this.animationFrames.DASH_N: this.animationFrames.WALK_N) :
+            this.animationFrames.STAND;
+        let flip = this.getFlipped();
         if (this.escaped)
             return;
         let sprite = [0, 0];
@@ -303,10 +303,18 @@ export class Player extends Monster {
             this.currentFrame = 0;
             this.lastFramePos = new Vec2(this.pos);
         }
-        else if (this.vel.x === 0) {
-            sprite = [0, this.sprite[1]];
+        else if (this.activeState === STATE_DODGE) {
+            sprite = activeAnimation[0];
             this.currentFrame = 0;
             this.lastFramePos = new Vec2(this.pos);
+        }
+        else if (this.vel.x === 0) {
+            sprite = activeAnimation[this.currentFrame % activeAnimation.length];
+            if (this.pos.dist(this.lastFramePos) * 8 >= 1) {
+                this.currentFrame += Math.floor(this.pos.dist(this.lastFramePos) * 8);
+                this.lastFramePos = new Vec2(this.pos);
+            }
+            flip = (this.currentFrame % activeAnimation.length) >= 2;
         }
         else {
             if (this.facing !== this.lastFacing) {
@@ -316,15 +324,15 @@ export class Player extends Monster {
                 this.currentFrame += Math.floor(this.pos.dist(this.lastFramePos) * 8);
                 this.lastFramePos = new Vec2(this.pos);
             }
-            this.currentFrame = this.currentFrame % this.walkFrames.length;
-            sprite = this.walkFrames[this.currentFrame];
+            this.currentFrame = this.currentFrame % activeAnimation.length;
+            sprite = activeAnimation[this.currentFrame];
         }
         //Show recently activated item
         if (!this.selectedTimer.finished()) {
             game.sprites.entitiesItems.drawScaled(this.selectedSprite, this.pos.x + 0.25, this.pos.y - 0.25, 0.5);
         }
         //Show player in current state
-        game.sprites.players.draw([sprite[0], sprite[1]], this.getDisplayX(), this.getDisplayY(), this.getFlipped());
+        game.sprites.base.draw([sprite[0], sprite[1]], this.getDisplayX(), this.getDisplayY(), flip);
         //TODO: Show inventory attachment
         //this.inventory.activeItem().drawInPlay(this.currentFrame);
         if (!this.hitTimer.finished()) {
@@ -396,6 +404,18 @@ export class Player extends Monster {
      * @param {number} millis 
      * @param {boolean} dodging 
      */
+    driftCheck(game, millis, dodging) {
+        const driftScale = 1.0/6400;
+        this.vel.x = this.vel.x>0? Math.max(this.vel.x - driftScale*millis/15, 0) : Math.min(this.vel.x + driftScale*millis/15, 0);
+        this.vel.y = this.vel.y>0? Math.max(this.vel.y - driftScale*millis/15, 0) : Math.min(this.vel.y + driftScale*millis/15, 0);
+    }
+
+    /**
+     * 
+     * @param {Game} game 
+     * @param {number} millis 
+     * @param {boolean} dodging 
+     */
     moveCheck(game, millis, dodging) {
         // left
         if (this.controlStates['left']) {
@@ -445,26 +465,6 @@ export class Player extends Monster {
             this.use(game, 0);
         }
     }
-
-    fallCheck(game, millis) {
-        // check falling -- player is falling unless they are in contact with a block below them
-        // let isFalling = true;
-        // for(let t of game.tiles.contacters(this.bounds())) {
-        //     if(t.standable && this.vel.y>=0 && t.y==this.bounds().bottom && game.tiles.above(t).passable) { //TODO: this should be some sort of tile-specific standing on class
-        //         isFalling=t.stoodOnBy(this, this.lastVel);
-        //         if(!isFalling) break;
-        //     }
-        // }
-        // return isFalling;
-        return false;
-    }
-
-    runCheck(game) {
-        // running
-        if (!this.controlStates['run']) this.running = false;
-        else this.running = true;
-    }
-
     /**
      * 
      * @param {Game} game 

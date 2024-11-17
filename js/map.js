@@ -1,10 +1,11 @@
 //@ts-check
 import { Treasure } from "./entity_items";
 import { Jelly } from "./monster";
-import { BeachLower, BeachUpper, Floor, KioskDispenser, KioskScreen, Wall, WaterDeep, WaterShallow } from "./tile";
+import { BeachLower, BeachUpper, Floor, KioskDispenser, KioskScreen, Palm, Wall, WaterDeep, WaterShallow } from "./tile";
 import { TileMap } from "./tilemap";
 import { choose, getRandomInt, randomRange, Rect, tryTo, Vec2 } from "./util";
 /**@typedef {import('./game').Game} Game */
+/**@typedef {import('./tile').Tile} Tile */
 
 /**
  * 
@@ -325,83 +326,22 @@ function generateTiles(game) {
     tiles.fillCircle([15, 15], 8.5, BeachLower);
     tiles.fillCircle([16, 16], 3.5, BeachUpper);
 
-    //     //Build the rooms
-    //     keyRooms = buildCelledRooms(tiles, W, H, biome);
-
-    //     //Define the quadrants
-    //     let entryQuad = keyRooms[0].shrinkBorders(2);
-    //     let kioskQuad = keyRooms[0].shrinkBorders(2);
-    //     let exitQuad = keyRooms[1].shrinkBorders(2);
-    //     let lockerQuad = keyRooms[2].shrinkBorders(2);
-    //     console.log('keyRooms:', keyRooms)
-
-    //     //Put in the kiosk
-    //     let q = kioskQuad;
-    //     let kioskPos = null;
-    //     for(kioskPos of shuffle(Array.from(tiles.iterRect(q))))
-    //         if(tiles.at(kioskPos) instanceof Floor 
-    //           && tiles.below(kioskPos).standable) // && (tiles.above(kioskPos) instanceof Wall 
-    // //        || (tiles.above(kioskPos) instanceof Floor))
-    //             break;
-    //     tiles.below(kioskPos).replace(Wall);
-    //     let ks = tiles.above(kioskPos).replace(KioskScreen);
-    //     let kt=tiles.set(kioskPos, KioskDispenser, ks);
-
-    //     //Put in the locker
-    //     q = lockerQuad;
-    //     let lPos = null;
-    //     for(lPos of shuffle(Array.from(tiles.iterRect(q))))
-    //         if(tiles.at(lPos) instanceof Floor 
-    //           && tiles.below(lPos).standable) // && (tiles.above(kioskPos) instanceof Wall 
-    // //        || (tiles.above(kioskPos) instanceof Floor))
-    //             break;
-    //     tiles.below(lPos).replace(Wall);
-    //     tiles.set(lPos, Locker);
-
-    //     //Put in the entrance
-    //     q = entryQuad;
-    // //    q.h = Math.min(q.h,4);
-    // //    q.w = Math.min(3,q.w)
-    //     let startPos = null;
-    //     for(startPos of shuffle(Array.from(tiles.iterRect(q))))
-    //         if(kioskPos.dist(startPos)>3 && tiles.at(startPos) instanceof Floor && tiles.below(startPos).standable)
-    //             break;
-
-    //     tiles.set(startPos, Entrance);
-    //     tiles.below(startPos).replace(Wall);
-    //     let lt = tiles.leftOf(startPos);
-    //     if(!lt.passable)
-    //         tiles.set(lt, Floor);
-    //     let rt = tiles.rightOf(startPos);
-    //     if(!rt.passable)
-    //         tiles.set(rt, Floor);        
-
-    //     //Put in the exit
-    //     q = exitQuad;
-
-    //     let endPos = null;
-    //     for(endPos of shuffle(Array.from(tiles.iterRect(q))))
-    //         if(tiles.at(endPos) instanceof Floor && tiles.below(endPos) instanceof Wall)
-    //             break;
-    //     tiles.set(endPos, Exit);
-    //     lt = tiles.leftOf(endPos);
-    //     if(!lt.passable)
-    //         tiles.set(lt, Floor);
-    //     rt = tiles.rightOf(endPos);
-    //     if(!rt.passable)
-    //         tiles.set(rt, Floor);
-
-    //     console.log('map start pos:',startPos);
-    //     console.log('map end pos:',endPos);
-    //     console.log('kiosk pos:',kioskPos);
-    //     console.log('locker pos:',lPos);
-
     tiles.startTile = tiles.at([15, 15]);
     tiles.endTile = tiles.at([10, 10]);
     let kioskPos = [20, 20]
     let ks = tiles.above(new Vec2(kioskPos)).replace(KioskScreen).tile;
     let kt = tiles.get(kioskPos).replace(KioskDispenser).tile;
     tiles.kioskTile = kt;
+
+    for(let i=0; i<5; i++) {
+        let tile = randomPassableTile(tiles,new Vec2(tiles.startTile), false, false);
+        if (tile!==undefined) {
+            tiles.set(tile.pos, Palm);
+        }
+    }
+
+
+
 }
 
 /**
@@ -413,6 +353,7 @@ function generateTiles(game) {
  * @returns 
  */
 export function randomPassableTile(tiles, playerPos = null, standable = false, standable_not_passable = true) {
+    /**@type {Tile|undefined} */
     let tile;
     tryTo('get random passable tile', function () {
         let x = randomRange(0, tiles.dimW - 1);

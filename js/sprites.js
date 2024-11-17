@@ -180,27 +180,34 @@ export const monsterRowLocIds = Object.freeze({
     Jester: 4,
 });
 
-export const baseSetIds = {
+export const baseSetIds = Object.freeze({
     BeachUpper: pos(4, 1),
     BeachLower: pos(9, 1),
+
     Water: pos(10, 1),
     Jelly: pos(11, 1),
-    Cannonball: pos(12, 1),
+    Cannonball: pos(13, 2),
     Wall: pos(13, 1),
     WallEnd: pos(13, 0),
     Pillar1: pos(6, 1),
     Pillar2: pos(7, 1),
     Pillar3: pos(8, 1),
-    PlayerCharacter1: pos(10, 6),
-    PlayerCharacter2: pos(11, 6),
-    PlayerCharacter3: pos(12, 6),
-    PlayerCharacter4: pos(13, 6),
+    PlayerCharacter1: pos(0, 8),
+    PlayerCharacter2: pos(1, 8),
+    PlayerCharacter3: pos(2, 8),
+    PlayerCharacter4: pos(3, 8),
     Slash: pos(10, 7),
     Strike: pos(10, 7),
-}
+    Cutlas: pos(11, 7),
+    Palm: pos(4, 2),
+    Crab: pos(6, 4),
+    CrabEgg: pos(12, 1),
+});
 
 export const bigSetIds = Object.freeze({
     Boss1: rect(0, 3, 3, 3),
+    CanonNS: rect(11, 3, 1, 2),
+    CanonEW: rect(12, 3, 2, 1),
 });
 
 export const tileIds = Object.freeze({
