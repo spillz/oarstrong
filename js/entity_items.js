@@ -1,11 +1,92 @@
 //@ts-check
 
 import { Vec2, Rect } from './util';
-import { entityItemIds } from './sprites';
+import { baseSetIds, bigSetIds, entityItemIds } from './sprites';
 import { Exit, Floor, Kiosk, Tile, Void, Wall } from './tile';
 import { Entity } from './entity';
 import { Player } from './player';
+import { Monster } from './monster';
 /**@typedef {import('./game').Game} Game */
+
+/**@typedef {Vec2|[number,number]|number[]} VecLike */
+
+export class Palm extends Entity {
+    /**
+     * 
+     * @param {Tile} tile 
+     * @param {[number, number]|[number,number,number,number]} sprite 
+     */
+    constructor(tile, sprite = null) {
+        super(tile, bigSetIds.Palm);
+    };
+    /**@type {Entity['entityCollide']} */
+    entityCollide(game, entity) {
+        if (entity.isPlayer) {
+            //Force player back to collision boundary
+            const [px, py, pw, ph] = entity.bounds();
+            const [ox, oy, ow, oh] = this.bounds();
+          
+            const overlapX = Math.min(px + pw - ox, ox + ow - px);
+            const overlapY = Math.min(py + ph - oy, oy + oh - py);
+
+            if (overlapX > 0 && overlapY > 0) {
+              if (overlapX <= overlapY) {
+                entity.pos[0] += px < ox ? -overlapX : overlapX;
+              } else {
+                entity.pos[1] += py < oy ? -overlapY : overlapY;
+              }
+            }
+            entity.vel[0] = 0;
+            entity.vel[1] = 0;
+        }
+    }
+
+    bounds() {
+        return new Rect([this.pos[0]+0.2, this.pos[1]+0.2, 0.6, 0.6]);
+    }
+    draw(game) {
+        game.sprites.base.drawRotatedMultitile(bigSetIds.Palm, this.pos[0] - 0.5, this.pos[1] - 1, 0, false);
+    }    
+}
+
+export class CrabShot extends Entity {
+    /**
+     * 
+     * @param {Tile} tile 
+     * @param {[number, number]|[number,number,number,number]} sprite 
+     * @param {number} angle
+     */
+    constructor(tile, sprite = null, angle) {
+        super(tile, baseSetIds.CrabShot);
+        this.vel[0] = Math.cos(angle*Math.PI/180) * 1.0/20;
+        this.vel[1] = Math.sin(angle*Math.PI/180) * 1.0/20;
+        this.angle = angle;
+    };
+    /**@type {Entity['entityCollide']} */
+    entityCollide(game, entity) {
+        if (entity.isPlayer) {
+            //Force player back to collision boundary
+            const player = /**@type {Player} */(entity);
+            player.hitFrom(game, this.pos, 1, 1);
+            this.dead = true;
+        }
+    }
+    /**@type {Entity['update']} */
+    update(game, millis) {
+        super.update(game, millis);
+        this.pos = this.pos.add(this.vel.scale(millis/15));
+    }
+    bounds() {
+        return new Rect([this.pos[0]+0.2, this.pos[1]+0.2, 0.6, 0.6]);
+    }
+    /**@type {Entity['draw']} */
+    draw(game) {
+        if (this.sprite.length===2) {
+            game.sprites.base.drawRotated(this.sprite, this.pos[0], this.pos[1], this.angle+90);
+        }
+    }    
+
+}
 
 export class Treasure extends Entity {
     constructor(tile) {

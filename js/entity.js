@@ -23,7 +23,7 @@ export class Entity {
         /**@type {Vec2} */
         this.size = new Vec2([1, 1]);
         /**@type {Rect} */
-        this.boundingBox = new Rect([0.25, 0.25, 0.5, 0.75]);
+        this.boundingBox = new Rect([0.25, 0.25, 0.5, 0.5]);
         /**@type {Rect[]} */
         this.boundingBoxes = [];
         /**@type {number} */
@@ -121,7 +121,7 @@ export class Entity {
      * @param {Game} game 
      */
     draw(game) {
-        game.sprites.entitiesItems.draw([this.sprite[0], this.sprite[1]], this.getDisplayX(), this.getDisplayY(), this.getFlipped());
+        game.sprites.base.draw([this.sprite[0], this.sprite[1]], this.getDisplayX(), this.getDisplayY(), this.getFlipped());
     }
 
     draw_bounds(game) {

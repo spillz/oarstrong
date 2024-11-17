@@ -4,6 +4,7 @@ import { randomRange, Rect, Timer, Vec2 } from "./util";
 import { baseSetIds, monsterRowLocIds } from "./sprites";
 import { Tile, Void, Wall } from "./tile";
 import { Entity } from "./entity";
+import { CrabShot } from "./entity_items";
 /**@typedef {import('./game').Game} Game */
 
 export class Monster extends Entity {
@@ -63,7 +64,7 @@ export class Monster extends Entity {
         game.sprites.monsters.draw([this.dying ? 1 : 0, this.sprite[1]], this.getDisplayX(), this.getDisplayY(), this.getFlipped());
         if (!this.hitTimer.finished()) {
             if (baseSetIds.Strike.length === 2) {
-                game.sprites.entitiesItems.draw(baseSetIds.Strike, this.getDisplayX(), this.getDisplayY(), this.getFlipped())
+                game.sprites.entitiesItems.draw(baseSetIds.Strike, this.getDisplayX(), this.getDisplayY(), this.getFlipped());
             }
         }
     }
@@ -362,3 +363,49 @@ export class Jelly extends Monster {
     }
 
 }
+
+
+export class Crabby extends Monster {
+    constructor(tile) {
+        super(tile, [0,monsterRowLocIds.OneEye], 1);
+        this.hp = 1;
+        this.topSpeed = 0.5 * this.topSpeed;
+        this.fallOrigin = null;
+        this.stance = 'passive'
+        this.launchTimer = new Timer(10000, Math.random()*5000);
+        this.launching = 0;
+    }
+    /** @type {Monster['draw']} */
+    draw(game) {
+        if (baseSetIds.Crab.length === 2) {
+            game.sprites.base.draw(baseSetIds.Crab, this.getDisplayX(), this.getDisplayY(), this.getFlipped());
+        }
+    }
+
+    /** @type {Monster['update']} */
+    update(game, millis) {
+        let wasFalling = this.falling;
+        let oldVel = this.vel.y;
+        super.update(game, millis);
+        if (this.falling && (!wasFalling || this.fallOrigin == null) || (oldVel < 0) && (this.vel.y >= 0))
+            this.fallOrigin = new Vec2(this.pos);
+        if (!this.falling && wasFalling) {
+            let distance = this.pos.y - this.fallOrigin.y;
+            if (distance >= 2) this.stun(3000);
+            if (distance >= 3) this.fallBoom(game, 1.5);
+        }
+
+        this.launchTimer.tick(millis);
+        if (this.launchTimer.finished()) {
+            if(this.launching<=8) {
+                this.launchTimer.reset(500);
+                game.items.push(new CrabShot(game.tiles.at(this.tile_pos()), null, this.launching*45));
+            } else {
+                this.launching = 0;
+                this.launchTimer.reset(10000-5000*Math.random())
+            }
+            this.launching++;
+        }
+    }
+}
+

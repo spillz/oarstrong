@@ -23,7 +23,7 @@ export class Player extends Monster {
     isPlayer = true;
     boundingBox = new Rect([0.25, 0.5, 0.5, 0.5]);
     hitBox = new Rect([0.25, 0.25, 0.5, 0.5]);
-    dashBox = new Rect([0, 0.25, 1, 1]);
+    dashBox = new Rect([0, 0, 1, 1]);
     immunityTimer = new Timer(1000, 1000);
     selectedTimer = new Timer(500, 500);
     hitTimer = new Timer(500, 500);
@@ -310,8 +310,8 @@ export class Player extends Monster {
         }
         else if (this.vel.x === 0) {
             sprite = activeAnimation[this.currentFrame % activeAnimation.length];
-            if (this.pos.dist(this.lastFramePos) * 8 >= 1) {
-                this.currentFrame += Math.floor(this.pos.dist(this.lastFramePos) * 8);
+            if (this.pos.dist(this.lastFramePos) * 4 >= 1) {
+                this.currentFrame += Math.floor(this.pos.dist(this.lastFramePos) * 4);
                 this.lastFramePos = new Vec2(this.pos);
             }
             flip = (this.currentFrame % activeAnimation.length) >= 2;
@@ -483,7 +483,6 @@ export class Player extends Monster {
                 }
             }
         }
-
     }
 
     /**

@@ -74,7 +74,7 @@ export class Game {
         this.touch = new controllers.TouchController(this);
         this.gamepadMgr = new controllers.GamepadManager(this);
         this.camera = new camera.Camera();
-        this.tileSize = this.getTileScale() * 16;
+        this.tileSize = this.getTileScale() * 32;
 
         this.sprites = {
             players: new sprites.SpriteSheet(this, "sprites/players.png"),
@@ -258,31 +258,42 @@ export class Game {
                     this.tiles.at([i, j]).draw(game);
                 }
             }
-
+            const allItems = [...this.activePlayers, ...this.monsters, ...this.items];
+            allItems.sort((a, b) => a.pos[1]-b.pos[1])
             if (this.cullOffCamera) {
                 let cam = this.camera;
-                for (let m of this.monsters) {
-                    if (cam.collide(new util.Rect([m.pos.x, m.pos.y, 1, 1]))) m.draw(this);
-                }
-                for (let p of this.activePlayers) {
-                    if (cam.collide(new util.Rect([p.pos.x, p.pos.y, 1, 1]))) p.draw(this);
-                }
-                for (let i of this.items) {
-                    if (cam.collide(new util.Rect([i.pos.x, i.pos.y, 1, 1]))) i.draw(this);
+                for (let i of allItems) {
+                    if (cam.shrinkBorders(-2).collide(new util.Rect([i.pos.x, i.pos.y, 1, 1]))) i.draw(this);
                 }
             } else {
-                for (let i = 0; i < this.monsters.length; i++) {
-                    this.monsters[i].draw(this);
-                }
-
-                for (let player of this.activePlayers) {
-                    player.draw(this);
-                }
-
                 for (let i = 0; i < this.items.length; i++) {
                     this.items[i].draw(this);
                 }
             }
+            // if (this.cullOffCamera) {
+            //     let cam = this.camera;
+            //     for (let m of this.monsters) {
+            //         if (cam.collide(new util.Rect([m.pos.x, m.pos.y, 1, 1]))) m.draw(this);
+            //     }
+            //     for (let p of this.activePlayers) {
+            //         if (cam.collide(new util.Rect([p.pos.x, p.pos.y, 1, 1]))) p.draw(this);
+            //     }
+            //     for (let i of this.items) {
+            //         if (cam.collide(new util.Rect([i.pos.x, i.pos.y, 1, 1]))) i.draw(this);
+            //     }
+            // } else {
+            //     for (let i = 0; i < this.monsters.length; i++) {
+            //         this.monsters[i].draw(this);
+            //     }
+
+            //     for (let player of this.activePlayers) {
+            //         player.draw(this);
+            //     }
+
+            //     for (let i = 0; i < this.items.length; i++) {
+            //         this.items[i].draw(this);
+            //     }
+            // }
 
             // for(let i=0;i<this.items.length;i++){
             //     this.items[i].draw_bounds();
@@ -361,9 +372,9 @@ export class Game {
         let sw = window.innerWidth;
         let scale;
         if (this.camera.scrollable) {
-            scale = sh / (this.camera.viewPortH + this.uiHeight) / 16;
+            scale = sh / (this.camera.viewPortH + this.uiHeight) / 32;
         } else {
-            scale = Math.min(sh / (this.prefDimH + this.uiHeight) / 16, sw / (this.prefDimW + this.uiWidth) / 16);
+            scale = Math.min(sh / (this.prefDimH + this.uiHeight) / 32, sw / (this.prefDimW + this.uiWidth) / 32);
         }
         if (!this.fillScreen) { //pixel perfect scaling
             scale = Math.floor(scale);
@@ -398,7 +409,7 @@ export class Game {
             this.camera.viewPortH = 8;
         }
 
-        this.tileSize = this.getTileScale() * 16;
+        this.tileSize = this.getTileScale() * 32;
         this.fitMaptoTileSize(this.tileSize);
         this.setupCanvas();
         this.mainMenu.updateWindowSize(this);

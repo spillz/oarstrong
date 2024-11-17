@@ -1,7 +1,7 @@
 //@ts-check
-import { Treasure } from "./entity_items";
-import { Jelly } from "./monster";
-import { BeachLower, BeachUpper, Floor, KioskDispenser, KioskScreen, Palm, Wall, WaterDeep, WaterShallow } from "./tile";
+import { Treasure, Palm } from "./entity_items";
+import { Crabby, Jelly } from "./monster";
+import { BeachLower, BeachUpper, Floor, KioskDispenser, KioskScreen, Wall, WaterDeep, WaterShallow } from "./tile";
 import { TileMap } from "./tilemap";
 import { choose, getRandomInt, randomRange, Rect, tryTo, Vec2 } from "./util";
 /**@typedef {import('./game').Game} Game */
@@ -23,6 +23,20 @@ export function generateLevel(game) {
     for (let i = 0; i < game.cells; i++) {
         game.items.push(new Treasure(randomPassableTile(game.tiles)));
     }
+
+    let i = 0;
+    for(let tpos of game.tiles.iterRandom(new Rect([10,10,20,20]), BeachUpper, undefined, 5)) {
+        game.items.push(new Palm(game.tiles.at(tpos)));
+        i++;
+        if (i>5) break;
+    }   
+
+    i = 0;
+    for(let tpos of game.tiles.iterRandom(new Rect([5,5,30,30]), BeachLower, undefined, 5)) {
+        game.monsters.push(new Crabby(game.tiles.at(tpos)));
+        i++;
+        if (i>5) break;
+    }   
 
     for (let t of game.tiles.iterAll()) {
         t.initItems(game);
@@ -332,16 +346,6 @@ function generateTiles(game) {
     let ks = tiles.above(new Vec2(kioskPos)).replace(KioskScreen).tile;
     let kt = tiles.get(kioskPos).replace(KioskDispenser).tile;
     tiles.kioskTile = kt;
-
-    for(let i=0; i<5; i++) {
-        let tile = randomPassableTile(tiles,new Vec2(tiles.startTile), false, false);
-        if (tile!==undefined) {
-            tiles.set(tile.pos, Palm);
-        }
-    }
-
-
-
 }
 
 /**
@@ -389,7 +393,7 @@ export function generateMonsters(game, playerPos) {
  */
 export function spawnMonster(game, playerPos = null, standable = false) {
     let m = [];
-    m = [Jelly];
+    m = [Jelly, Crabby];
     // if(game.level<=5)
     //     m = [OneEye, OneEye, OneEye, OneEye, OneEye, OneEye, TwoEye, TwoEye, Tank];
     // else if(game.level<=10)

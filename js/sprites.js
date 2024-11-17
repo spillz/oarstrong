@@ -199,15 +199,15 @@ export const baseSetIds = Object.freeze({
     Slash: pos(10, 7),
     Strike: pos(10, 7),
     Cutlas: pos(11, 7),
-    Palm: pos(4, 2),
     Crab: pos(6, 4),
-    CrabEgg: pos(12, 1),
+    CrabShot: pos(12, 1),
 });
 
 export const bigSetIds = Object.freeze({
     Boss1: rect(0, 3, 3, 3),
     CanonNS: rect(11, 3, 1, 2),
     CanonEW: rect(12, 3, 2, 1),
+    Palm: rect(4, 2, 2, 2),
 });
 
 export const tileIds = Object.freeze({
