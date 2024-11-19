@@ -75,6 +75,7 @@ export class CrabShot extends Entity {
     update(game, millis) {
         super.update(game, millis);
         this.pos = this.pos.add(this.vel.scale(millis/15));
+        if (this.pos.x<-1 || this.pos.y<-1 || this.pos.x>game.tiles.dimW || this.pos.y>game.tiles.dimH) this.dead = true;
     }
     bounds() {
         return new Rect([this.pos[0]+0.2, this.pos[1]+0.2, 0.6, 0.6]);
@@ -129,17 +130,14 @@ export class Chips extends Entity {
 
     /**@type {Entity['entityCollide']} */
     entityCollide(game, entity) {
-        if (game.competitiveMode) {
-            if (entity instanceof Player) entity.score += 0.2;
-        } else {
-            game.score++;
-        }
+        game.score++;
         if (entity instanceof Player) {
             game.playSound("pickup2");
-            let inv = entity.inventory.activeItem();
-            entity.selectedTimer.reset(500);
-            entity.selectedSprite = inv.sprite;
-            entity.chips += this.value;
+            if (entity.hp<entity.maxHp) entity.hp++;
+            // let inv = entity.inventory.activeItem();
+            // entity.selectedTimer.reset(500);
+            // entity.selectedSprite = inv.sprite;
+            // entity.chips += this.value;
             this.dead = true;
         }
     }
@@ -147,12 +145,13 @@ export class Chips extends Entity {
     /**@type {Entity['entityInteract']} */
     entityInteract(game, entity, action) {
         if (!this.dead && entity instanceof Player) {
+            if (entity.hp<entity.maxHp) entity.hp++;
             game.score++;
             game.playSound("pickup2");
-            let inv = entity.inventory.activeItem()
-            entity.selectedTimer.reset(500);
-            entity.selectedSprite = inv.sprite;
-            entity.chips += this.value;
+            // let inv = entity.inventory.activeItem()
+            // entity.selectedTimer.reset(500);
+            // entity.selectedSprite = inv.sprite;
+            // entity.chips += this.value;
             this.dead = true;
         }
     }

@@ -128,6 +128,9 @@ export class Monster extends Entity {
                 return;
             }
         }
+        if (this.dying) {
+            this.vel = this.vel.scale(0.9**(millis/15));
+        }
 
         //Targeting
         if (!stunned && !this.drone) {
@@ -146,7 +149,7 @@ export class Monster extends Entity {
                 }
             }
             else if (!this.falling && this.vel.x == 0) { //hit an obstacle turn around
-                this.facing = -this.facing;
+                // this.facing = -this.facing;
             }
             if (!this.falling || Math.abs(this.vel.x) < this.topSpeed) {
                 this.vel.x = this.facing * this.topSpeed;
@@ -350,18 +353,8 @@ export class Jelly extends Monster {
 
     /** @type {Monster['update']} */
     update(game, millis) {
-        let wasFalling = this.falling;
-        let oldVel = this.vel.y;
         super.update(game, millis);
-        if (this.falling && (!wasFalling || this.fallOrigin == null) || (oldVel < 0) && (this.vel.y >= 0))
-            this.fallOrigin = new Vec2(this.pos);
-        if (!this.falling && wasFalling) {
-            let distance = this.pos.y - this.fallOrigin.y;
-            if (distance >= 2) this.stun(3000);
-            if (distance >= 3) this.fallBoom(game, 1.5);
-        }
     }
-
 }
 
 
@@ -384,16 +377,7 @@ export class Crabby extends Monster {
 
     /** @type {Monster['update']} */
     update(game, millis) {
-        let wasFalling = this.falling;
-        let oldVel = this.vel.y;
         super.update(game, millis);
-        if (this.falling && (!wasFalling || this.fallOrigin == null) || (oldVel < 0) && (this.vel.y >= 0))
-            this.fallOrigin = new Vec2(this.pos);
-        if (!this.falling && wasFalling) {
-            let distance = this.pos.y - this.fallOrigin.y;
-            if (distance >= 2) this.stun(3000);
-            if (distance >= 3) this.fallBoom(game, 1.5);
-        }
 
         this.launchTimer.tick(millis);
         if (this.launchTimer.finished()) {
