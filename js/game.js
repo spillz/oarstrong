@@ -206,7 +206,7 @@ export class Game {
             this.spawnCounter -= millis;
             if (this.spawnCounter <= 0) {
                 this.spawnCounter = this.spawnRate;
-                if (this.monsters.length < 50) {
+                if (this.monsters.length < 20) {
                     map.spawnMonster(this, null, true); //player.pos to stop spawning near the player
                 }
             }
