@@ -402,7 +402,7 @@ export class Crabby extends Monster {
                 game.items.push(new CrabShot(game.tiles.at(this.tile_pos()), null, this.launching*45));
             } else {
                 this.launching = 0;
-                this.launchTimer.reset(10000-5000*Math.random())
+                this.launchTimer.reset(2000-0*Math.random())
             }
             this.launching++;
         }

@@ -40,7 +40,7 @@ export class Player extends Monster {
 
     //Player Attributes
     maxHp = 4;
-    topSpeed = 1.0 / 400;
+    topSpeed = 1.0 / 250;
     jumpSpeed = 1.0 / 135;
     maxFallSpeed = 1.0 / 50;
     airJumps = 0;
