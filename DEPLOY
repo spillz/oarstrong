@@ -1,0 +1,18 @@
+#!/usr/bin/bash
+
+if [ -z "$1" ]
+  then
+    echo "No commit message supplied for spillz.github.io repo"
+    exit 2
+fi
+
+rm -rf dist
+npm run build
+rm -rf ../spillz.github.io/oarstrong
+mkdir -p ../spillz.github.io/oarstrong
+cp -r dist/* ../spillz.github.io/oarstrong/
+cd ../spillz.github.io
+git add oarstrong/*
+git commit -m "$1"
+git push
+cd ../oarstrong
