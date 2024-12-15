@@ -14,6 +14,7 @@ import * as players from './player.js';
 import * as entityItems from './entity_items.js';
 import * as menu from './menu.js';
 import * as scores from './scores.js';
+import { initSounds, initSpriteFiles } from './assets.js';
 
 export class Game {
     /**@type {number|null} */
@@ -76,12 +77,13 @@ export class Game {
         this.camera = new camera.Camera();
         this.tileSize = this.getTileScale() * 32;
 
+        const spriteFiles = initSpriteFiles();
         this.sprites = {
-            players: new sprites.SpriteSheet(this, "sprites/players.png"),
-            monsters: new sprites.SpriteSheet(this, "sprites/monsters.png"),
-            tiles: new sprites.SpriteSheet(this, "sprites/tiles.png"),
-            entitiesItems: new sprites.SpriteSheet(this, "sprites/entities_and_items.png"),
-            base: new sprites.SpriteSheet(this, "sprites/WaveStrong.png", 32),
+            players: new sprites.SpriteSheet(this, spriteFiles.Players),
+            monsters: new sprites.SpriteSheet(this, spriteFiles.Monsters),
+            tiles: new sprites.SpriteSheet(this, spriteFiles.Tiles),
+            entitiesItems: new sprites.SpriteSheet(this, spriteFiles.EntitiesItems),
+            base: new sprites.SpriteSheet(this, spriteFiles.WaveStrong, 32),
         }
 
     }
@@ -418,45 +420,7 @@ export class Game {
 
 
     initSounds() {
-        this.sounds = {
-            hit1: new Audio('sounds/hit1.wav'),
-            hit2: new Audio('sounds/hit2.wav'),
-            pickup1: new Audio('sounds/sfx_sounds_powerup5.wav'),
-            pickup2: new Audio('sounds/sfx_sounds_powerup15.wav'),
-            changeInv: new Audio('sounds/Slide_Sharp_01.wav'),
-            boom: new Audio('sounds/explodemini.wav'),
-            boomBig: new Audio('sounds/explode.wav'),
-            dead1: new Audio('sounds/aargh0.ogg'),
-            dead2: new Audio('sounds/aargh1.ogg'),
-            dead3: new Audio('sounds/aargh2.ogg'),
-            dead4: new Audio('sounds/aargh3.ogg'),
-            dead5: new Audio('sounds/aargh4.ogg'),
-            dead6: new Audio('sounds/aargh5.ogg'),
-            dead7: new Audio('sounds/aargh6.ogg'),
-            dead8: new Audio('sounds/aargh7.ogg'),
-            exitLevel: new Audio('sounds/rock_metal_slide_1.wav'),
-            gameOver: new Audio('sounds/evil cyber laugh.wav'),
-            //            newLevel: new Audio('sounds/newLevel.wav'),
-            //            spell: new Audio('sounds/spell.wav'),
-            kioskInteract: new Audio('sounds/Click_Standard_02.wav'),
-            kioskDispense: new Audio('sounds/flaunch.wav'),
-            gunFire1: new Audio('sounds/sfx_wpn_laser7.wav'),
-            gunFire2: new Audio('sounds/sfx_wpn_laser6.wav'),
-            gunFire3: new Audio('sounds/sfx_wpn_laser5.wav'),
-            gunReload: new Audio('sounds/sfx_wpn_reload.wav'),
-            rifleFire: new Audio('sounds/Rifleprimary2.ogg'),
-            rifleReload: new Audio('sounds/sfx_wpn_reload.wav'),
-            shotgunFire: new Audio('sounds/minigun3.ogg'),
-            shotgunReload: new Audio('sounds/Rack.mp3'),
-            rocketFire: new Audio('sounds/sfx_wpn_missilelaunch.wav'),
-            rocketReload: new Audio('sounds/Slide_Sharp_01.wav'),
-            grappleFire: new Audio('sounds/jumppad.ogg'),
-            grappleReload: new Audio('sounds/Slide_Sharp_01.wav'),
-            grappleRetract: new Audio('sounds/rattle1.wav'),
-            wrenchFire: new Audio('sounds/rattle1.wav'),
-            wrenchReload: new Audio('sounds/Slide_Sharp_01.wav'),
-            saberCharge: new Audio('sounds/SpaceShip_Engine_Large_Loop_00.wav'),
-        };
+        this.sounds = initSounds();
     }
 
     playSound(soundName, ctime = 0, loop = false, play = true) {
