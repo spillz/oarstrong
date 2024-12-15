@@ -181,6 +181,7 @@ export const monsterRowLocIds = Object.freeze({
 });
 
 export const baseSetIds = Object.freeze({
+    Empty: pos(15, 15),
     BeachUpper: pos(4, 0),
     BeachLower: pos(5, 0),
     Water: pos(6, 0),

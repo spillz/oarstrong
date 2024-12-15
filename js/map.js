@@ -393,7 +393,7 @@ export function generateMonsters(game, playerPos) {
  * @param {(typeof Monster)[]|null} candidates
  */
 export function spawnMonster(game, playerPos, standable = false, candidates=null) {
-    if (candidates===null) candidates = [FlakBomb];
+    if (candidates===null) candidates = [Crabby, FlakBomb];
     let monsterType = choose(candidates);
     let monster;
     if (monsterType===FlakBomb) {

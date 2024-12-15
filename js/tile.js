@@ -276,7 +276,7 @@ export class KioskScreen extends Kiosk {
      * @param {Vec2} pos 
      */
     constructor(pos) {
-        super(pos, tileIds.KioskScreen, true, false);
+        super(pos, baseSetIds.BeachUpper, true, false);
         /**@type {KioskPickup[]} */
         this.items = [];
         /**@type {KioskPickup|null} */
@@ -298,7 +298,7 @@ export class KioskDispenser extends Kiosk {
      * @param {KioskScreen} kioskScreen 
      */
     constructor(pos, kioskScreen) {
-        super(pos, tileIds.KioskDispenser, true, false);
+        super(pos, baseSetIds.BeachUpper, true, false);
         /**@type {KioskPickup[]} */
         this.items = [];
         /**@type {number|null} */

@@ -155,10 +155,10 @@ export class Monster extends Entity {
         //         this.vel.x = this.facing * this.topSpeed;
         //     }
         // }
-        // //Slow down if stunned and not falling
-        // if (stunned && !this.drone && !this.falling) {
-        //     this.vel.x /= 1.5 * millis / 15;
-        // }
+        //Slow down if stunned and not falling
+        if (stunned && !this.drone && !this.falling) {
+            this.vel.x /= 1.5 * millis / 15;
+        }
 
         // //Core movement logic
         // if (!stunned && !this.drone && game.levelTime > 0 && !this.falling) {
@@ -381,9 +381,13 @@ export class Crabby extends Monster {
         if (this.dead) return;
         this.launchTimer.tick(millis);
         if (this.launchTimer.finished()) {
-            if(this.launching<=8) {
+            if(this.launching<=2) {
                 this.launchTimer.reset(500);
-                game.items.push(new CrabShot(game.tiles.at(this.tile_pos()), null, this.launching*45));
+                const player = game.activePlayers[0];
+                const [dx, dy] = this.pos.scale(-1).add(player.pos);
+                let angle = Math.atan2(dy, dx)*180/Math.PI;
+                angle = Math.round(angle/45)*45
+                game.items.push(new CrabShot(game.tiles.at(this.tile_pos()), null, angle));
             } else {
                 this.launching = 0;
                 this.launchTimer.reset(2000-0*Math.random())
@@ -413,6 +417,10 @@ export class FlakBomb extends Monster {
         }
     }
 
+    /** @type {Monster['stun']} */
+    stun(time = 2000) {
+    }
+
     /** @type {Monster['update']} */
     update(game, millis) {
         super.update(game, millis);
@@ -427,5 +435,19 @@ export class FlakBomb extends Monster {
             this.launchTimer.reset();
         }
     }
+
+    /**
+     * 
+     * @param {Game} game
+     * @param {Vec2} pos 
+     * @param {number} damage 
+     * @param {number} knockbackScale 
+     */
+    hitFrom(game, pos, damage, knockbackScale = 0) {
+        this.hp -= damage;
+        if (damage > 0) this.hitTimer.reset(200);
+        if (this.hp <= 0) this.die(game);
+    }
+
 }
 
