@@ -181,14 +181,13 @@ export const monsterRowLocIds = Object.freeze({
 });
 
 export const baseSetIds = Object.freeze({
-    BeachUpper: pos(4, 1),
-    BeachLower: pos(9, 1),
-
-    Water: pos(10, 1),
+    BeachUpper: pos(4, 0),
+    BeachLower: pos(5, 0),
+    Water: pos(6, 0),
     Jelly: pos(11, 1),
     Cannonball: pos(13, 2),
-    Wall: pos(13, 1),
-    WallEnd: pos(13, 0),
+    Wall: pos(8, 0),
+    WallEnd: pos(9, 0),
     Pillar1: pos(6, 1),
     Pillar2: pos(7, 1),
     Pillar3: pos(8, 1),
@@ -201,13 +200,15 @@ export const baseSetIds = Object.freeze({
     Cutlas: pos(11, 7),
     Crab: pos(6, 4),
     CrabShot: pos(12, 1),
+    FlakShot: pos(10, 2),
 });
 
 export const bigSetIds = Object.freeze({
     Boss1: rect(0, 3, 3, 3),
-    CanonNS: rect(11, 3, 1, 2),
-    CanonEW: rect(12, 3, 2, 1),
+    CanonNS: rect(14, 3, 1, 2),
+    CanonEW: rect(12, 4, 2, 1),
     Palm: rect(4, 2, 2, 2),
+    FlakBomb: rect(8, 2, 2, 2),
 });
 
 export const tileIds = Object.freeze({

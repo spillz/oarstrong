@@ -206,10 +206,10 @@ export class Game {
                 }
             }
             this.spawnCounter -= millis;
-            if (this.spawnCounter <= 0) {
+            if (this.spawnCounter <= 0 && this.activePlayers.length>0) {
                 this.spawnCounter = this.spawnRate;
                 if (this.monsters.length < 20) {
-                    map.spawnMonster(this, null, true); //player.pos to stop spawning near the player
+                    map.spawnMonster(this, this.activePlayers[0].pos, true); //player.pos to stop spawning near the player
                 }
             }
             this.updateTimes.push(performance.now() - updateStart);

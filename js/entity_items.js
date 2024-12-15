@@ -89,6 +89,52 @@ export class CrabShot extends Entity {
 
 }
 
+
+export class FlakShot extends Entity {
+    /**
+     * 
+     * @param {Tile} tile 
+     * @param {[number, number]|[number,number,number,number]} sprite 
+     * @param {number} angle
+     */
+    constructor(tile, sprite = null, angle) {
+        super(tile, baseSetIds.FlakShot);
+        const dx = Math.cos(angle*Math.PI/180);
+        const dy = Math.sin(angle*Math.PI/180);
+        this.vel[0] = dx * 1.0/20;
+        this.vel[1] = dy * 1.0/20;
+        this.pos[0] += dx;
+        this.pos[1] += dy;
+        this.angle = angle;
+    };
+    /**@type {Entity['entityCollide']} */
+    entityCollide(game, entity) {
+        if (entity.isPlayer) {
+            //Force player back to collision boundary
+            const player = /**@type {Player} */(entity);
+            player.hitFrom(game, this.pos, 1, 1);
+            this.dead = true;
+        }
+    }
+    /**@type {Entity['update']} */
+    update(game, millis) {
+        super.update(game, millis);
+        this.pos = this.pos.add(this.vel.scale(millis/15));
+        if (this.pos.x<-1 || this.pos.y<-1 || this.pos.x>game.tiles.dimW || this.pos.y>game.tiles.dimH) this.dead = true;
+    }
+    bounds() {
+        return new Rect([this.pos[0]+0.2, this.pos[1]+0.2, 0.6, 0.6]);
+    }
+    /**@type {Entity['draw']} */
+    draw(game) {
+        if (this.sprite.length===2) {
+            game.sprites.base.drawRotated(this.sprite, this.pos[0], this.pos[1], this.angle+90);
+        }
+    }    
+
+}
+
+
 export class Treasure extends Entity {
     constructor(tile) {
         super(tile, entityItemIds.Energy)

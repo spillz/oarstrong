@@ -1,6 +1,6 @@
 //@ts-check
 import { Treasure, Palm } from "./entity_items";
-import { Crabby, Jelly } from "./monster";
+import { Crabby, FlakBomb, Jelly, Monster } from "./monster";
 import { BeachLower, BeachUpper, Floor, KioskDispenser, KioskScreen, Wall, WaterDeep, WaterShallow } from "./tile";
 import { TileMap } from "./tilemap";
 import { choose, getRandomInt, randomRange, Rect, tryTo, Vec2 } from "./util";
@@ -381,7 +381,7 @@ export function randomPassableTile(tiles, playerPos = null, standable = false, s
 export function generateMonsters(game, playerPos) {
     let numMonsters = Math.min(2 * game.level, 15) + 5;
     for (let i = 0; i < numMonsters; i++) {
-        spawnMonster(game, playerPos, false);
+        spawnMonster(game, playerPos, false, [Jelly, Crabby]);
     }
 }
 
@@ -390,21 +390,21 @@ export function generateMonsters(game, playerPos) {
  * @param {Game} game
  * @param {Vec2} playerPos 
  * @param {boolean} standable 
+ * @param {(typeof Monster)[]|null} candidates
  */
-export function spawnMonster(game, playerPos = null, standable = false) {
-    let m = [];
-    m = [Jelly, Crabby];
-    // if(game.level<=5)
-    //     m = [OneEye, OneEye, OneEye, OneEye, OneEye, OneEye, TwoEye, TwoEye, Tank];
-    // else if(game.level<=10)
-    //     m = [OneEye, OneEye, TwoEye, TwoEye, Tank];
-    // else if(game.level<=15)
-    //     m = [OneEye, OneEye, TwoEye, Tank];
-    // else if(game.level<=20)
-    //    m = [OneEye, OneEye, TwoEye, TwoEye, Tank, Eater];
-    // else 
-    //    m = [OneEye, TwoEye, Tank, Eater, Jester];
-    let monsterType = choose(m);
-    let monster = new monsterType(randomPassableTile(game.tiles, playerPos, standable));
+export function spawnMonster(game, playerPos, standable = false, candidates=null) {
+    if (candidates===null) candidates = [FlakBomb];
+    let monsterType = choose(candidates);
+    let monster;
+    if (monsterType===FlakBomb) {
+        const x = Math.random()>0.5? 0 : game.tiles.dimW-1;
+        const pos = new Vec2([x-1, playerPos.y-1]);
+        monster = new FlakBomb(pos);
+        monster.topSpeed *= 2;
+        monster.vel.x = x>0? -monster.topSpeed : monster.topSpeed;
+        console.log('spawned',monster)
+    } else {
+        monster = new monsterType(randomPassableTile(game.tiles, playerPos, standable));
+    }
     game.monsters.push(monster);
 }
