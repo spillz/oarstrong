@@ -152,6 +152,9 @@ export class Vec2 extends Array {
     add(vec) {
         return new Vec2([this[0]+vec[0],this[1]+vec[1]]);
     }
+    subtract(vec) {
+        return new Vec2([this[0]-vec[0],this[1]-vec[1]]);
+    }
     scale(scalar) {
         return new Vec2([this[0]*scalar,this[1]*scalar]);
     }

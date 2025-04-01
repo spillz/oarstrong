@@ -210,6 +210,10 @@ export const bigSetIds = Object.freeze({
     CanonEW: rect(12, 4, 2, 1),
     Palm: rect(4, 2, 2, 2),
     FlakBomb: rect(8, 2, 2, 2),
+    Oarstrong1: rect(0,9,3,3),
+    Oarstrong2: rect(3,9,3,3),
+    Oarstrong3: rect(6,9,3,3),
+    OarstrongShadow: rect(11,11,2,1)
 });
 
 export const tileIds = Object.freeze({

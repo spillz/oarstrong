@@ -1,6 +1,6 @@
 //@ts-check
 import { Treasure, Palm } from "./entity_items";
-import { Crabby, FlakBomb, Jelly, Monster } from "./monster";
+import { Crabby, FlakBomb, Jelly, Monster, Oarstrong } from "./monster";
 import { BeachLower, BeachUpper, Floor, KioskDispenser, KioskScreen, Wall, WaterDeep, WaterShallow } from "./tile";
 import { TileMap } from "./tilemap";
 import { choose, getRandomInt, randomRange, Rect, tryTo, Vec2 } from "./util";
@@ -383,6 +383,7 @@ export function generateMonsters(game, playerPos) {
     for (let i = 0; i < numMonsters; i++) {
         spawnMonster(game, playerPos, false, [Jelly, Crabby]);
     }
+    spawnMonster(game, playerPos, false, [Oarstrong]);
 }
 
 /**

@@ -52,8 +52,13 @@ export class Monster extends Entity {
         this.dying = false;
         /**@type {number}*/
         this.intelLevel = 1;
+        /**@type {number}*/
+        this.elevation = 0;
         /**@type {string}*/
         this.stance = 'aggressive' //passive, aggressive, targeting, perhaps other options
+    }
+    getDisplayY() {
+        return super.getDisplayY() - this.elevation;
     }
 
     /**
@@ -326,6 +331,87 @@ export class Monster extends Entity {
         for (let player of game.activePlayers) {
             if (this.pos.dist(player.pos) <= radius) {
                 player.hitFrom(game, this.pos, this.hitDamage * 3);
+            }
+        }
+    }
+}
+
+export class Oarstrong extends Monster {
+    constructor(tile) {
+        super(tile, [0,monsterRowLocIds.OneEye], 1);
+        this.hp = 10;
+        this.topSpeed = 0.5 * this.topSpeed;
+        this.fallOrigin = null;
+        /**@type {Vec2} */
+        this.leapDestination = new Vec2([0,0]);
+        /**@type {Timer} */
+        this.attackTimer = new Timer(10000, Math.random()*5000);
+        /**@type {'passive'|'preLeap'|'leap'|'postLeap'} */
+        this.stance = 'passive';
+        this.immune = true;
+    }
+    /** @type {Monster['draw']} */
+    draw(game) {
+        if (this.dead) {
+            return;
+        } 
+        game.sprites.base.drawRotatedMultitile(bigSetIds.OarstrongShadow, this.getDisplayX()+0.5, this.getDisplayY()+2.25+this.elevation, 0, this.getFlipped());
+        if (this.stance === 'passive') {
+            game.sprites.base.drawRotatedMultitile(bigSetIds.Oarstrong1, this.getDisplayX(), this.getDisplayY(), 0, this.getFlipped());
+        } else if (this.stance === 'preLeap') {
+            game.sprites.base.drawRotatedMultitile(bigSetIds.Oarstrong3, this.getDisplayX(), this.getDisplayY(), 0, this.getFlipped());
+        } else if (this.stance === 'leap') {
+            game.sprites.base.drawRotatedMultitile(bigSetIds.Oarstrong1, this.getDisplayX(), this.getDisplayY(), 0, this.getFlipped());
+        } else if (this.stance === 'postLeap') {
+            game.sprites.base.drawRotatedMultitile(bigSetIds.Oarstrong2, this.getDisplayX(), this.getDisplayY(), 0, this.getFlipped());
+        }
+    }
+    /** @type {Monster['update']} */
+    update(game, millis) {
+        super.update(game, millis);
+        if (this.dead) return;
+        if (this.stance==='passive') {
+            this.attackTimer.tick(millis);
+            if (this.attackTimer.finished()) {
+                this.immune = true;
+                this.stance = 'preLeap';
+                this.attackTimer.reset(1000);
+            }
+        } else if (this.stance==='preLeap') {
+            this.attackTimer.tick(millis);
+            if (this.attackTimer.finished()) {
+                this.stance = 'leap';
+                this.attackTimer.reset(1000);
+                const [player, id] = game.nearestPlayer(this.pos);
+                if (player!==null) {
+                    const dist = player.pos.dist(this.pos);
+                    if (dist<=10) {
+                        this.leapDestination = new Vec2(player.pos);
+                    } else {
+                        this.leapDestination = this.pos.add(player.pos.subtract(this.pos).scale(10/dist));
+                    }
+                    this.vel = this.leapDestination.subtract(this.pos).scale(10/dist/1000);
+                    this.attackTimer.reset(1000*10/dist);
+                }
+            }
+        } else if (this.stance==='leap') {
+            this.attackTimer.tick(millis);
+            const frac = this.attackTimer.elapsed/this.attackTimer.timer;
+            const h = 2
+            this.elevation = -4 * h * frac * frac + 4 * h * frac;
+            if (this.vel.dist([0,0])<=0.0001 || this.pos.dist(this.leapDestination)<=0.1 || this.attackTimer.finished()) {
+                this.vel = new Vec2([0,0]);
+                this.stance = 'postLeap';
+                this.attackTimer.reset(1000);
+                this.elevation = 0;
+            }
+        } else if (this.stance==='postLeap') {
+            this.attackTimer.tick(millis);
+            if (this.attackTimer.finished()) {
+                this.immune = false;
+                this.stance = 'passive';
+                this.attackTimer.reset(5000);
+                this.vel = new Vec2([0,0]);
             }
         }
     }
